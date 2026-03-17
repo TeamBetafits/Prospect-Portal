@@ -95,7 +95,7 @@ export async function getFilloutTemplateIdsOnly(options?: {
   const ids = forms
     .map((f) => f.filloutTemplateId)
     .filter((id): id is string => Boolean(id));
-  return [...new Set(ids)];
+  return Array.from(new Set(ids));
 }
 
 /** Full Available Form record as stored in Airtable (id + all fields). */
