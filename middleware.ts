@@ -27,7 +27,7 @@ export default withAuth(
                 const pathname = req.nextUrl.pathname;
 
                 // Public routes that don't require authentication
-                const publicRoutes = ["/login", "/access", "/api/auth", "/admin/generate-magic-link"];
+                const publicRoutes = ["/login", "/access", "/api/auth", "/admin/generate-magic-link", "/forms"];
                 const isPublicRoute = publicRoutes.some((route) => pathname.startsWith(route));
 
                 if (isPublicRoute) {
