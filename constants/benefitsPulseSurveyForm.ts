@@ -1,40 +1,37 @@
 import { FormDataDefinition } from '@/types/form';
 
-/**
- * Benefits Pulse Survey Form (Benefits Feedback Form)
- * Fillout Template ID: eQ7FVU76PDus
- * Airtable Form ID: recmB9IdRhtgckvaY
- * URL: https://betafits.fillout.com/t/eQ7FVU76PDus
- * 
- * Based on actual Fillout form structure:
- * - Company (text input)
- * - How are you currently enrolled for health benefits? (radio)
- * - Overall Benefits Package (slider/range)
- * - Medical Plan Options (slider/range)
- * - Additional fields may be present below
- */
 export const BENEFITS_PULSE_SURVEY_FORM_DATA: FormDataDefinition = {
-    id: 'recmB9IdRhtgckvaY',
-    title: 'Benefits Pulse Survey',
+    id: 'eQ7FVU76PDus',
+    title: 'Employee Feedback Survey',
     pages: [
         {
-            id: 'survey-questions',
-            name: 'Survey Questions',
+            id: 'employee-feedback',
+            name: 'Employee Feedback',
             sections: [
                 {
-                    id: 'basic-info',
-                    title: 'Basic Information',
-                    description: 'Share feedback about your current health benefits enrollment and overall benefits package to help identify areas for improvement.',
+                    id: 'employee-context',
+                    title: 'Employee Information',
+                    description: 'Tell us how you are currently enrolled so Betafits can better understand employee sentiment.',
                     questions: [
                         {
-                            id: 'company',
+                            id: 'kGqMobiUDPcHQXPEsEWGhs',
                             label: 'Company',
                             type: 'text',
                             required: false,
-                            placeholder: 'Enter company name'
+                            placeholder: 'Company name'
                         },
                         {
-                            id: 'healthBenefitsEnrollment',
+                            id: 'bNkoRCS16B1NF8Vu3Kz9JR',
+                            label: 'Benefit Year',
+                            type: 'radio',
+                            required: false,
+                            options: [
+                                { value: '2026', label: '2026' },
+                                { value: '2025', label: '2025' }
+                            ]
+                        },
+                        {
+                            id: '9xm1AdHoV7ZErSGuemYwT3',
                             label: 'How are you currently enrolled for health benefits?',
                             type: 'radio',
                             required: true,
@@ -46,89 +43,95 @@ export const BENEFITS_PULSE_SURVEY_FORM_DATA: FormDataDefinition = {
                                 { value: 'waived', label: 'Waived' },
                                 { value: 'not_eligible', label: 'Not Eligible' }
                             ],
-                            validation: [{ type: 'required', message: 'Please select your enrollment status' }]
+                            validation: [{ type: 'required', message: 'Please select your enrollment status.' }]
+                        },
+                        {
+                            id: '9rvPU3rfdvaY6355Si6DTP',
+                            label: 'On which medical plan are you enrolled?',
+                            type: 'text',
+                            required: false,
+                            placeholder: 'Enter your current plan name'
                         }
                     ]
                 },
                 {
-                    id: 'satisfaction',
-                    title: 'Benefits Satisfaction',
-                    description: 'Please rate your satisfaction with your benefits',
+                    id: 'ratings',
+                    title: 'Benefit Ratings',
+                    description: 'Rate each area from 1 to 5.',
                     questions: [
                         {
-                            id: 'overallBenefitsPackage',
+                            id: '1tTsT4b7YxSrc2e8bTQtMD',
                             label: 'Overall Benefits Package',
-                            type: 'number', // Slider will be rendered as number input with range
+                            type: 'number',
                             required: true,
-                            placeholder: 'Rate from 1-10',
+                            placeholder: '1 to 5',
                             validation: [
-                                { type: 'required', message: 'Please rate your overall benefits package' },
-                                { type: 'min', value: 1, message: 'Rating must be at least 1' },
-                                { type: 'max', value: 10, message: 'Rating must be at most 10' }
+                                { type: 'required', message: 'Please rate the overall benefits package.' },
+                                { type: 'min', value: 1, message: 'Rating must be at least 1.' },
+                                { type: 'max', value: 5, message: 'Rating must be at most 5.' }
                             ]
                         },
                         {
-                            id: 'medicalPlanOptions',
+                            id: 'eVZknTJzZyJ8XMoKqUeVFW',
                             label: 'Medical Plan Options',
-                            type: 'number', // Slider will be rendered as number input with range
+                            type: 'number',
                             required: true,
-                            placeholder: 'Rate from 1-10',
+                            placeholder: '1 to 5',
                             validation: [
-                                { type: 'required', message: 'Please rate your medical plan options' },
-                                { type: 'min', value: 1, message: 'Rating must be at least 1' },
-                                { type: 'max', value: 10, message: 'Rating must be at most 10' }
+                                { type: 'required', message: 'Please rate the medical plan options.' },
+                                { type: 'min', value: 1, message: 'Rating must be at least 1.' },
+                                { type: 'max', value: 5, message: 'Rating must be at most 5.' }
                             ]
                         },
                         {
-                            id: 'dentalSatisfaction',
-                            label: 'Satisfaction with Dental Benefits',
+                            id: '4UCLbaHFiRB9ARDkPVvqDd',
+                            label: 'Medical Network',
                             type: 'number',
-                            required: false,
-                            placeholder: 'Rate from 1-10',
+                            required: true,
+                            placeholder: '1 to 5',
                             validation: [
-                                { type: 'min', value: 1, message: 'Rating must be at least 1' },
-                                { type: 'max', value: 10, message: 'Rating must be at most 10' }
+                                { type: 'required', message: 'Please rate the medical network.' },
+                                { type: 'min', value: 1, message: 'Rating must be at least 1.' },
+                                { type: 'max', value: 5, message: 'Rating must be at most 5.' }
                             ]
                         },
                         {
-                            id: 'visionSatisfaction',
-                            label: 'Satisfaction with Vision Benefits',
+                            id: 'gEoRfJNxN37JVkvyow4NWU',
+                            label: 'Employee Costs',
                             type: 'number',
-                            required: false,
-                            placeholder: 'Rate from 1-10',
+                            required: true,
+                            placeholder: '1 to 5',
                             validation: [
-                                { type: 'min', value: 1, message: 'Rating must be at least 1' },
-                                { type: 'max', value: 10, message: 'Rating must be at most 10' }
+                                { type: 'required', message: 'Please rate employee costs.' },
+                                { type: 'min', value: 1, message: 'Rating must be at least 1.' },
+                                { type: 'max', value: 5, message: 'Rating must be at most 5.' }
                             ]
                         },
                         {
-                            id: 'surveyComments',
-                            label: 'Additional Comments',
+                            id: 'qgw9BnxZsRS2b3oc5iH5ej',
+                            label: 'Other Benefits (Non-Medical)',
+                            type: 'number',
+                            required: true,
+                            placeholder: '1 to 5',
+                            validation: [
+                                { type: 'required', message: 'Please rate non-medical benefits.' },
+                                { type: 'min', value: 1, message: 'Rating must be at least 1.' },
+                                { type: 'max', value: 5, message: 'Rating must be at most 5.' }
+                            ]
+                        },
+                        {
+                            id: '6EbFGLKbaNEhDbn4FyCD2J',
+                            label: 'Comments',
                             type: 'textarea',
                             required: false,
-                            placeholder: 'Any additional feedback about your benefits'
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            id: 'review',
-            name: 'Review',
-            sections: [
-                {
-                    id: 'review-info',
-                    title: 'Review Your Responses',
-                    questions: [
+                            placeholder: 'Share any additional comments about your benefits experience'
+                        },
                         {
-                            id: 'confirmAccuracy',
-                            label: 'I confirm that all responses are accurate',
-                            type: 'radio',
-                            required: true,
-                            options: [
-                                { value: 'yes', label: 'Yes, all responses are accurate' }
-                            ],
-                            validation: [{ type: 'required', message: 'Please confirm accuracy' }]
+                            id: '8w6e',
+                            label: 'Type your question here',
+                            type: 'text',
+                            required: false,
+                            placeholder: 'Optional question for the Betafits team'
                         }
                     ]
                 }

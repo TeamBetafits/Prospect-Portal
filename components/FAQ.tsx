@@ -17,16 +17,16 @@ const FAQAccordionItem: React.FC<{ item: FAQItem }> = ({ item }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="border border-gray-100 rounded-xl bg-white transition-all duration-200 hover:border-brand-200 mb-3 overflow-hidden">
+    <div className="border border-neutral-100 rounded-md bg-white transition-all duration-200 hover:border-primary-200 mb-3 overflow-hidden">
       <button
         onClick={() => setIsOpen(!isOpen)}
         className="w-full flex items-center justify-between px-6 py-5 text-left focus:outline-none"
       >
-        <span className="text-[15px] font-bold text-gray-900 tracking-tight pr-4">
+        <span className="text-[15px] font-bold text-neutral-900 tracking-tight pr-4">
           {item.question}
         </span>
         <svg
-          className={`w-5 h-5 text-gray-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-brand-500' : ''}`}
+          className={`w-5 h-5 text-neutral-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-primary-500' : ''}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
@@ -39,7 +39,7 @@ const FAQAccordionItem: React.FC<{ item: FAQItem }> = ({ item }) => {
           isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'
         }`}
       >
-        <div className="px-6 pb-6 pt-0 text-[14px] leading-relaxed text-gray-600 font-medium">
+        <div className="px-6 pb-6 pt-0 text-[14px] leading-relaxed text-neutral-600 font-medium">
           {item.answer}
         </div>
       </div>
@@ -63,7 +63,7 @@ const FAQ: React.FC = () => {
         },
         {
           question: "Do I need to complete everything at once?",
-          answer: "No. You can save progress and return anytime. Your dashboard will always show what's completed and what's still needed."
+          answer: "No. You can save progress and return anytime. Your dashboard will always show what’s completed and what’s still needed."
         }
       ]
     },
@@ -73,11 +73,11 @@ const FAQ: React.FC = () => {
       items: [
         {
           question: "Why do I see certain forms assigned to me?",
-          answer: "Forms are assigned based on your company's situation (current benefits, group size, compliance needs). Not all forms apply to every company."
+          answer: "Forms are assigned based on your company’s situation (current benefits, group size, compliance needs). Not all forms apply to every company."
         },
         {
-          question: "What are \"Available Forms\"?",
-          answer: "These are optional or situational forms you may complete if relevant. If you're unsure whether one applies to you, feel free to ask our team."
+          question: "What are “Available Forms”?",
+          answer: "These are optional or situational forms you may complete if relevant. If you’re unsure whether one applies to you, feel free to ask our team."
         },
         {
           question: "Can I update a form after submitting it?",
@@ -126,8 +126,8 @@ const FAQ: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-12 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
       {/* Page Header */}
       <div className="text-center">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight mb-4">Frequently Asked Questions</h1>
-        <p className="text-gray-500 font-medium max-w-2xl mx-auto leading-relaxed">
+        <h1 className="text-neutral-900 tracking-tight mb-4">Frequently Asked Questions</h1>
+        <p className="text-neutral-500 font-medium max-w-2xl mx-auto leading-relaxed">
           This portal is designed to guide you through benefits onboarding step by step. 
           Below are answers to common questions about forms, documents, timelines, and support.
         </p>
@@ -137,12 +137,12 @@ const FAQ: React.FC = () => {
         {categories.map((category, catIdx) => (
           <div key={catIdx} className="space-y-6">
             <div className="flex items-center gap-3 px-2">
-              <div className="w-10 h-10 rounded-md bg-brand-50 flex items-center justify-center text-brand-600">
+              <div className="w-10 h-10 rounded-sm bg-primary-50 flex items-center justify-center text-primary-600">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={category.icon} />
                 </svg>
               </div>
-              <h2 className="text-xl font-bold text-gray-900 tracking-tight">{category.title}</h2>
+              <h2 className="text-xl font-bold text-neutral-900 tracking-tight">{category.title}</h2>
             </div>
             
             <div className="space-y-4">

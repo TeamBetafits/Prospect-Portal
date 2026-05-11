@@ -1,67 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { AssignedForm, FormStatus } from '@/types';
-import { fetchAirtableRecords } from '@/lib/airtable/fetch';
+import { NextResponse } from 'next/server';
 import { getCompanyId } from '@/lib/auth/getCompanyId';
+import { listAssignedForms } from '@/lib/supabase/portal';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
-    const tableId = 'tblNeyKm9sKAKZq9n'; // Assigned Forms
+export async function GET() {
     const companyId = await getCompanyId();
-
-    if (!companyId) {
-        console.warn('[Assigned Forms API] No company ID - user not authenticated');
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!companyId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     try {
-        // Fetch all assigned forms and filter in code (ARRAYJOIN doesn't work reliably)
-        // Field: "Link to Intake Group Data" (NO hyphen, as per debug_tables.txt)
-        const allRecords = await fetchAirtableRecords(tableId, {
-            apiKey: process.env.AIRTABLE_API_KEY,
-            maxRecords: 100,
-        });
-
-        // Filter by company ID in code (more reliable than ARRAYJOIN)
-        const records = allRecords?.filter((record) => {
-            const linkField = record.fields['Link to Intake Group Data'];
-            
-            if (!linkField) {
-                return false;
-            }
-            
-            // Handle array of linked record IDs
-            if (Array.isArray(linkField) && linkField.length > 0) {
-                return linkField.some((id: string) => String(id).trim() === String(companyId).trim());
-            }
-            
-            // Handle single linked record ID
-            return String(linkField).trim() === String(companyId).trim();
-        }) || [];
-
-        if (!records || records.length === 0) {
-            return NextResponse.json([]);
-        }
-
-        const forms: AssignedForm[] = records.map((record) => {
-            const linkToAvailable = record.fields['Link to Available Forms'];
-            const availableFormId = linkToAvailable
-                ? (Array.isArray(linkToAvailable) ? linkToAvailable[0] : linkToAvailable)
-                : undefined;
-            return {
-                id: record.id,
-                name: String(record.fields['Name'] || ''),
-                status: (record.fields['Status'] as FormStatus) || FormStatus.NOT_STARTED,
-                description: String(record.fields['Assigned Form URL'] || ''),
-                availableFormId: availableFormId ? String(availableFormId) : undefined,
-            };
-        });
-
-        console.log(`[Assigned Forms API] Fetched ${forms.length} forms for company ${companyId}`);
-        return NextResponse.json(forms);
+        return NextResponse.json(await listAssignedForms(companyId));
     } catch (error) {
         console.error('[Assigned Forms API] Error:', error);
         return NextResponse.json([], { status: 500 });
     }
 }
-

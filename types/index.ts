@@ -14,10 +14,11 @@ export enum ProgressStatus {
 }
 
 export enum DocumentStatus {
-  RECEIVED = 'Received',
+  NOT_REVIEWED = 'Not Reviewed',
   UNDER_REVIEW = 'Under Review',
   APPROVED = 'Approved',
-  REJECTED = 'Rejected'
+  REJECTED = 'Rejected',
+  COMPLETE = 'complete'
 }
 
 export interface AssignedForm {
@@ -35,6 +36,49 @@ export interface AvailableForm {
   description: string;
 }
 
+export interface CompanyScopedQuery {
+  companyId: string;
+}
+
+export interface AvailableFormRecord {
+  id: string;
+  airtableId: string | null;
+  displayName: string;
+  sortOrder: number | null;
+  showInAvailableForms: boolean | null;
+  assignment: string | null;
+  assignmentType: string | null;
+  formsUrl: string | null;
+}
+
+export interface AssignedFormRecord {
+  id: string;
+  companyId: string;
+  availableFormId: string | null;
+  status: FormStatus;
+  submitted: boolean;
+}
+
+export interface PortalFormSubmission {
+  id: string;
+  companyId: string;
+  availableFormId: string | null;
+  formId: string;
+  formName: string;
+  status: FormStatus;
+  submittedAt: string;
+}
+
+export interface DocumentArtifactRecord {
+  id: string;
+  companyId: string;
+  documentType: string | null;
+  status: string | null;
+  fileName: string | null;
+  fileUrl: string | null;
+  metadata: Record<string, unknown> | null;
+}
+
 export interface DocumentArtifact {
   id: string;
   name: string;
@@ -42,6 +86,8 @@ export interface DocumentArtifact {
   fileName: string;
   date: string;
   url?: string;
+  documentType?: string;
+  fileUrl?: string;
 }
 
 export interface ProgressStep {
@@ -53,6 +99,14 @@ export interface ProgressStep {
   lastUpdated?: string;
 }
 
+export interface ContactInfo {
+  firstName: string;
+  lastName: string;
+  jobTitle: string;
+  phone: string;
+  email: string;
+}
+
 export interface CompanyData {
   name: string;
   entityType: string;
@@ -62,13 +116,7 @@ export interface CompanyData {
   naicsCode: string;
   address: string;
   renewalMonth: string;
-  contact: {
-    firstName: string;
-    lastName: string;
-    jobTitle: string;
-    phone: string;
-    email: string;
-  };
+  contact: ContactInfo;
   workforce: {
     totalEmployees: string;
     usHqEmployees: string;
@@ -98,7 +146,14 @@ export interface Solution {
   features: string[];
   websiteUrl: string;
   integrationType: string;
+  industry?: string;
+  linkedinDescription?: string;
+  packageContent?: string;
+  subCategory?: string;
+  bestFitFor?: string;
+  pairsWellWith?: string;
 }
+
 
 export interface DemographicInsights {
   eligibleEmployees: number;
@@ -152,11 +207,14 @@ export interface BenefitPlan {
   type: string;
   // Medical
   deductible?: string;
+  deductibleFamily?: string;
   oopm?: string;
+  oopmFamily?: string;
   coinsurance?: string;
   copay?: string;
   rx?: string;
   // Dental
+  valueScore?: string;
   annualMax?: string;
   preventive?: string;
   basic?: string;
@@ -168,11 +226,28 @@ export interface BenefitPlan {
   frameAllowance?: string;
   materialsFrequency?: string;
   frameFrequency?: string;
+  rates?: BenefitPlanRate[];
+  monthlyPremium?: number;
+  monthlyEmployerContribution?: number;
+  monthlyEmployeeContribution?: number;
+}
+
+export interface BenefitPlanRate {
+  tierKey: string;
+  tierLabel: string;
+  premium: number;
+  employerContribution: number;
+  employeeContribution: number;
+}
+
+export interface BenefitPlanRecord extends BenefitPlan {
+  planYear?: number;
 }
 
 export interface FeedbackResponse {
   id: string;
   submittedAt: string;
+  year?: number;
   tier: string;
   overallRating: number;
   medicalOptions: number;
@@ -204,7 +279,7 @@ export interface FAQCategory {
   items: FAQItem[];
 }
 
-export type ViewType = 'home' | 'company-details' | 'benefit-plans' | 'benefits-analysis' | 'benefit-budget' | 'employee-feedback' | 'appoint-betafits' | 'faq' | 'solutions-catalog' | 'solution-detail';
+export type ViewType = 'home' | 'company-details' | 'benefit-plans' | 'benefits-analysis' | 'benefit-budget' | 'employee-feedback' | 'appoint-betafits' | 'faq';
 
 export interface User {
   id: string;

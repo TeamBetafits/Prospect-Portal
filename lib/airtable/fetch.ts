@@ -1,3 +1,5 @@
+import { customFetch } from "@/lib/fetch";
+
 /**
  * Direct Airtable REST API client to avoid AbortSignal issues with the Airtable.js library
  * in Next.js/Vercel production environments
@@ -63,7 +65,7 @@ export async function fetchAirtableRecords(
             url.searchParams.set('offset', offset);
         }
 
-        const response = await fetch(url.toString(), {
+        const response = await customFetch(url.toString(), {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -112,7 +114,7 @@ export async function fetchAirtableRecordById(
     const url = `https://api.airtable.com/v0/${baseId}/${tableId}/${recordId}`;
 
     try {
-        const response = await fetch(url, {
+        const response = await customFetch(url, {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`,

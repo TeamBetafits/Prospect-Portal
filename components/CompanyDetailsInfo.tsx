@@ -49,16 +49,16 @@ export default function CompanyDetailsInfo({ data }: Props) {
     };
 
     return (
-        <div className="bg-white border border-gray-200 rounded-[28px] p-8 shadow-sm">
+        <div className="bg-white border border-neutral-200 rounded-md p-8 shadow-card">
             <div className="flex items-center justify-between mb-6">
                 <div>
-                    <h2 className="text-xl font-bold text-gray-900 tracking-tight">Legal & Contact Information</h2>
-                    <p className="text-[13px] text-gray-500 mt-0.5">Manage your company's legal and contact details.</p>
+                    <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Legal & Contact Information</h2>
+                    <p className="text-[13px] text-neutral-500 mt-0.5">Manage your company's legal and contact details.</p>
                 </div>
                 {!isEditing ? (
                     <button
                         onClick={() => setIsEditing(true)}
-                        className="px-4 py-2 bg-brand-600 text-white rounded-lg text-[13px] font-bold hover:bg-brand-700 transition-colors"
+                        className="px-4 py-2 bg-primary-600 text-white rounded-md text-[13px] font-bold hover:bg-primary-700 transition-colors"
                     >
                         Edit
                     </button>
@@ -75,14 +75,14 @@ export default function CompanyDetailsInfo({ data }: Props) {
                                 }
                             }}
                             disabled={isSaving}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-[13px] font-bold hover:bg-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-neutral-100 text-neutral-700 rounded-md text-[13px] font-bold hover:bg-neutral-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancel
                         </button>
                         <button
                             onClick={handleSave}
                             disabled={isSaving}
-                            className="px-4 py-2 bg-brand-600 text-white rounded-lg text-[13px] font-bold hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 py-2 bg-primary-600 text-white rounded-md text-[13px] font-bold hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isSaving ? 'Saving…' : 'Save'}
                         </button>
@@ -92,7 +92,7 @@ export default function CompanyDetailsInfo({ data }: Props) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         Company Name
                     </label>
                     {isEditing ? (
@@ -100,14 +100,14 @@ export default function CompanyDetailsInfo({ data }: Props) {
                             type="text"
                             value={editedData.name}
                             onChange={(e) => setEditedData({ ...editedData, name: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-[15px] focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-md text-[15px] focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     ) : (
-                        <p className="text-[16px] font-medium text-gray-900">{data.name || '-'}</p>
+                        <p className="text-[16px] font-medium text-neutral-900">{data.name || '-'}</p>
                     )}
                 </div>
                 <div>
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         Entity Type
                     </label>
                     {isEditing ? (
@@ -115,14 +115,14 @@ export default function CompanyDetailsInfo({ data }: Props) {
                             type="text"
                             value={editedData.entityType}
                             onChange={(e) => setEditedData({ ...editedData, entityType: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-[15px] focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-md text-[15px] focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     ) : (
-                        <p className="text-[16px] font-medium text-gray-900">{data.entityType || '-'}</p>
+                        <p className="text-[16px] font-medium text-neutral-900">{data.entityType || '-'}</p>
                     )}
                 </div>
                 <div>
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         EIN
                     </label>
                     {isEditing ? (
@@ -130,14 +130,14 @@ export default function CompanyDetailsInfo({ data }: Props) {
                             type="text"
                             value={editedData.ein}
                             onChange={(e) => setEditedData({ ...editedData, ein: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-[15px] focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-md text-[15px] focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     ) : (
-                        <p className="text-[16px] font-medium text-gray-900">{data.ein || '-'}</p>
+                        <p className="text-[16px] font-medium text-neutral-900">{data.ein || '-'}</p>
                     )}
                 </div>
                 <div>
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         Legal Name
                     </label>
                     {isEditing ? (
@@ -145,14 +145,14 @@ export default function CompanyDetailsInfo({ data }: Props) {
                             type="text"
                             value={editedData.legalName}
                             onChange={(e) => setEditedData({ ...editedData, legalName: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-[15px] focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-md text-[15px] focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     ) : (
-                        <p className="text-[16px] font-medium text-gray-900">{data.legalName || '-'}</p>
+                        <p className="text-[16px] font-medium text-neutral-900">{data.legalName || '-'}</p>
                     )}
                 </div>
                 <div>
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         SIC Code
                     </label>
                     {isEditing ? (
@@ -160,14 +160,14 @@ export default function CompanyDetailsInfo({ data }: Props) {
                             type="text"
                             value={editedData.sicCode}
                             onChange={(e) => setEditedData({ ...editedData, sicCode: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-[15px] focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-md text-[15px] focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     ) : (
-                        <p className="text-[16px] font-medium text-gray-900">{data.sicCode || '-'}</p>
+                        <p className="text-[16px] font-medium text-neutral-900">{data.sicCode || '-'}</p>
                     )}
                 </div>
                 <div>
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         NAICS Code
                     </label>
                     {isEditing ? (
@@ -175,14 +175,14 @@ export default function CompanyDetailsInfo({ data }: Props) {
                             type="text"
                             value={editedData.naicsCode}
                             onChange={(e) => setEditedData({ ...editedData, naicsCode: e.target.value })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-[15px] focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-md text-[15px] focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     ) : (
-                        <p className="text-[16px] font-medium text-gray-900">{data.naicsCode || '-'}</p>
+                        <p className="text-[16px] font-medium text-neutral-900">{data.naicsCode || '-'}</p>
                     )}
                 </div>
                 <div>
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         Phone Number
                     </label>
                     {isEditing ? (
@@ -193,20 +193,20 @@ export default function CompanyDetailsInfo({ data }: Props) {
                                 ...editedData, 
                                 contact: { ...editedData.contact, phone: e.target.value }
                             })}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-[15px] focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-md text-[15px] focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     ) : (
-                        <p className="text-[16px] font-medium text-gray-900">{data.contact.phone || '-'}</p>
+                        <p className="text-[16px] font-medium text-neutral-900">{data.contact.phone || '-'}</p>
                     )}
                 </div>
                 <div>
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         Contact email
                     </label>
-                    <p className="text-[16px] font-medium text-gray-900">{data.contact.email || '-'}</p>
+                    <p className="text-[16px] font-medium text-neutral-900">{data.contact.email || '-'}</p>
                 </div>
                 <div className="md:col-span-2">
-                    <label className="text-[13px] font-semibold text-gray-500 uppercase tracking-wider block mb-2">
+                    <label className="text-[13px] font-semibold text-neutral-500 uppercase tracking-wider block mb-2">
                         Address
                     </label>
                     {isEditing ? (
@@ -214,10 +214,10 @@ export default function CompanyDetailsInfo({ data }: Props) {
                             value={editedData.address}
                             onChange={(e) => setEditedData({ ...editedData, address: e.target.value })}
                             rows={2}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg text-[15px] focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                            className="w-full px-4 py-2 border border-neutral-300 rounded-md text-[15px] focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                         />
                     ) : (
-                        <p className="text-[16px] font-medium text-gray-900">{data.address || '-'}</p>
+                        <p className="text-[16px] font-medium text-neutral-900">{data.address || '-'}</p>
                     )}
                 </div>
             </div>

@@ -1,118 +1,21 @@
 import React from 'react';
 import Link from 'next/link';
 import { getCompanyId } from '@/lib/auth/getCompanyId';
-import { fetchAirtableRecords } from '@/lib/airtable/fetch';
 import { FeedbackResponse } from '@/types';
+import { getEmployeeFeedback } from '@/lib/supabase/portal';
 
 export const dynamic = 'force-dynamic';
 
 export default async function EmployeeFeedbackAllPage() {
     const companyId = await getCompanyId();
-    const apiKey = process.env.AIRTABLE_API_KEY;
 
-    // Default to empty/live-only structure
     let responses: FeedbackResponse[] = [];
-
-    if (apiKey && companyId) {
+    if (companyId) {
         try {
-            // Fetch feedback responses from EE Pulse Surveys table
-            const allRecords = await fetchAirtableRecords('tbl28XVUekjvl2Ujn', {
-                apiKey,
-                maxRecords: 1000, // Fetch up to 1000 records
-            });
-
-            // Filter by company ID in code (more reliable than ARRAYJOIN)
-            const records = allRecords?.filter((record) => {
-                const linkField = record.fields['Link to Intake - Group Data'];
-                
-                if (!linkField) {
-                    return false;
-                }
-                
-                // Handle array of linked record IDs
-                if (Array.isArray(linkField) && linkField.length > 0) {
-                    return linkField.some((id: string) => String(id).trim() === String(companyId).trim());
-                }
-                
-                // Handle single linked record ID
-                return String(linkField).trim() === String(companyId).trim();
-            }) || [];
-
-            if (records && records.length > 0) {
-                // Sort by createdTime (newest first) since we can't sort by it in the API
-                const sortedRecords = [...records].sort((a, b) => {
-                    const timeA = a.createdTime ? new Date(a.createdTime).getTime() : 0;
-                    const timeB = b.createdTime ? new Date(b.createdTime).getTime() : 0;
-                    return timeB - timeA; // Descending order (newest first)
-                });
-
-                // Helper to parse numeric field that can be null
-                const parseNumericFieldNullable = (fields: any, possibleNames: string[], defaultValue: number | null = null): number | null => {
-                    for (const name of possibleNames) {
-                        const value = fields[name];
-                        if (value !== undefined && value !== null && value !== '') {
-                            const parsed = Number(value);
-                            if (!isNaN(parsed)) {
-                                return parsed;
-                            }
-                        }
-                    }
-                    return defaultValue;
-                };
-
-                const mappedResponses: FeedbackResponse[] = sortedRecords.map(record => {
-                    const fields = record.fields;
-                    
-                    // Get tier - try multiple field name variations (based on schema: efld_survey_medical_tier)
-                    let tierValue = 
-                        fields['Medical Tier'] ||
-                        fields['Tier (Medical)'] ||
-                        fields['Medical Coverage Tier'] ||
-                        fields['Coverage Tier'] || 
-                        fields['Tier'] || 
-                        fields['Coverage'] ||
-                        fields['Medical'] ||
-                        null;
-                    
-                    // Handle if tier is an array (multiple values)
-                    if (Array.isArray(tierValue)) {
-                        tierValue = tierValue.join(' ');
-                    }
-                    
-                    // Convert to string and clean up
-                    let tier = tierValue ? String(tierValue).trim() : '';
-                    
-                    // If tier is empty or just whitespace, use default
-                    if (!tier || tier === '') {
-                        tier = 'Individual Only';
-                    }
-                    
-                    // Map to new FeedbackResponse structure
-                    return {
-                        id: record.id,
-                        submittedAt: String(fields['Created'] || record.createdTime || new Date().toISOString()).split('T')[0],
-                        tier: tier,
-                        overallRating: Number(fields['Overall'] || fields['Overall Rating'] || fields['Rating'] || fields['Score'] || fields['Overall Score'] || 0),
-                        medicalOptions: Number(fields['Medical Options'] || fields['Medical Options Rating'] || 0),
-                        medicalNetwork: Number(fields['Medical Network'] || fields['Medical Network Rating'] || 0),
-                        medicalCost: Number(fields['Medical Cost'] || fields['Employee Cost'] || fields['Cost Rating'] || 0),
-                        nonMedical: Number(fields['Non-Medical'] || fields['Non-Medical Rating'] || 0),
-                        retirement: parseNumericFieldNullable(fields, [
-                            'Retirement',
-                            'Retirement Rating',
-                            'Retirement Score',
-                        ], null),
-                        comments: String(fields['Comments'] || fields['Text'] || fields['Comment'] || ''),
-                    };
-                });
-
-                responses = mappedResponses;
-            }
+            responses = (await getEmployeeFeedback(companyId)).responses;
         } catch (error) {
-            console.error('[EmployeeFeedbackAllPage] Error fetching live data:', error);
+            console.error('[EmployeeFeedbackAllPage] Error fetching Supabase data:', error);
         }
-    } else {
-        console.warn('[EmployeeFeedbackAllPage] No API key or company ID available for live data.');
     }
 
     const getTierColor = (tier: string) => {

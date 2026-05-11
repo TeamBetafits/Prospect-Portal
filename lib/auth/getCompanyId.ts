@@ -1,15 +1,12 @@
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "./authOptions";
-import { getUserCompanyFromAirtable } from "./getUserCompany";
+import { getCompanyIdByEmail } from "@/lib/supabase/portal";
 
 /**
  * Get company ID from authenticated session
  * This function can be called from Server Components and API routes
  * 
- * It first tries to get company ID from the session, but if that's not available
- * or seems incorrect, it fetches directly from Airtable by email for accuracy.
- * 
- * @returns The company ID from the authenticated user's session or Airtable, or null if not authenticated
+ * @returns The company ID from Supabase users.company_id, or null if not linked.
  */
 export async function getCompanyId(): Promise<string | null> {
     try {
@@ -33,17 +30,13 @@ export async function getCompanyId(): Promise<string | null> {
             return null;
         }
 
-        // Always fetch from Airtable to ensure accuracy
-        // This ensures the company ID is always up-to-date and correct
-        // NO FALLBACK - if user is not linked to a company in Airtable, return null
-        const companyId = await getUserCompanyFromAirtable(email);
+        const companyId = await getCompanyIdByEmail(email);
 
         if (companyId) {
             return companyId;
         }
 
-        // No fallback - user must be properly linked in Airtable
-        console.warn(`[getCompanyId] No company ID found in Airtable for user: ${email}. User must be linked to a company.`);
+        console.warn(`[getCompanyId] No company ID found in Supabase for user: ${email}. User must be linked to a company.`);
         return null;
     } catch (error) {
         console.error('[getCompanyId] Error:', error);

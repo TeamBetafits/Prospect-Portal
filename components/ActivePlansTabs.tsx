@@ -18,20 +18,20 @@ export default function ActivePlansTabs({ plans }: Props) {
     const visionPlans = plans.filter(p => p.type.toLowerCase().includes('vision'));
 
     return (
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div className="bg-white border border-neutral-200 rounded-md p-6 shadow-card">
             <div className="mb-6">
-                <h2 className="text-xl font-bold text-gray-900 tracking-tight">Active Plans</h2>
-                <p className="text-[13px] text-gray-500 mt-0.5">Current benefit plans available for enrollment.</p>
+                <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Active Plans</h2>
+                <p className="text-[13px] text-neutral-500 mt-0.5">Current benefit plans available for enrollment.</p>
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 border-b border-gray-200 mb-6">
+            <div className="flex items-center gap-2 border-b border-neutral-200 mb-6">
                 <button
                     onClick={() => setActiveTab('medical')}
                     className={`px-4 py-2 text-[14px] font-bold transition-colors border-b-2 ${
                         activeTab === 'medical'
-                            ? 'text-brand-600 border-brand-600'
-                            : 'text-gray-500 border-transparent hover:text-gray-700'
+                            ? 'text-primary-600 border-primary-600'
+                            : 'text-neutral-500 border-transparent hover:text-neutral-700'
                     }`}
                 >
                     Medical ({medicalPlans.length})
@@ -40,8 +40,8 @@ export default function ActivePlansTabs({ plans }: Props) {
                     onClick={() => setActiveTab('dental')}
                     className={`px-4 py-2 text-[14px] font-bold transition-colors border-b-2 ${
                         activeTab === 'dental'
-                            ? 'text-brand-600 border-brand-600'
-                            : 'text-gray-500 border-transparent hover:text-gray-700'
+                            ? 'text-primary-600 border-primary-600'
+                            : 'text-neutral-500 border-transparent hover:text-neutral-700'
                     }`}
                 >
                     Dental ({dentalPlans.length})
@@ -50,8 +50,8 @@ export default function ActivePlansTabs({ plans }: Props) {
                     onClick={() => setActiveTab('vision')}
                     className={`px-4 py-2 text-[14px] font-bold transition-colors border-b-2 ${
                         activeTab === 'vision'
-                            ? 'text-brand-600 border-brand-600'
-                            : 'text-gray-500 border-transparent hover:text-gray-700'
+                            ? 'text-primary-600 border-primary-600'
+                            : 'text-neutral-500 border-transparent hover:text-neutral-700'
                     }`}
                 >
                     Vision ({visionPlans.length})

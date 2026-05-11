@@ -9,7 +9,7 @@ export default function HelpCard() {
     };
 
     return (
-        <div className="bg-[#1c240f] rounded-[28px] p-8 text-white relative overflow-hidden group shadow-xl flex flex-col justify-between">
+        <div className="bg-neutral-900 rounded-md p-8 text-white relative overflow-hidden group shadow-elevated flex flex-col justify-between">
             <div className="relative z-10">
                 <h3 className="text-[22px] font-bold mb-3 tracking-tight">Need assistance?</h3>
                 <p className="text-[#a1c270] text-[15px] font-medium leading-relaxed mb-8 max-w-[260px]">
@@ -19,7 +19,7 @@ export default function HelpCard() {
             <div className="relative z-10">
                 <button 
                     onClick={handleContactSupport}
-                    className="w-full bg-[#f3f7ed] hover:bg-white py-4 rounded-[8px] font-bold text-[13px] text-[#536b2e] transition-all uppercase tracking-[0.05em] active:scale-[0.98] shadow-sm"
+                    className="w-full bg-[#f3f7ed] hover:bg-white py-4 rounded-[8px] font-bold text-[13px] text-[#536b2e] transition-all uppercase tracking-[0.05em] active:scale-[0.98] shadow-card"
                 >
                     Contact Support
                 </button>

@@ -1,0 +1,97 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { FormStatus } from "@/types";
+import { FormValues } from "@/types/form";
+import { clearFormProgress, saveFormProgress } from "@/page-modules/forms/services/formProgressService";
+import { getAssignedFormStatus, getQuickStartInitialValues } from "@/page-modules/forms/services/formStatusService";
+import { mapQuickStartGroupDataToFormValues } from "@/page-modules/forms/services/quickStartPrefill";
+import { submitPortalForm, uploadQuickStartFiles } from "@/page-modules/forms/services/formSubmissionService";
+import { QuickStartFormConfig, QuickStartFormState } from "@/page-modules/forms/types/formWorkflow";
+
+export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormState {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [formStatus, setFormStatus] = useState<FormStatus | null>(null);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(config.checkSubmissionStatus);
+  const [initialValues, setInitialValues] = useState<FormValues>({});
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadStatus() {
+      if (!config.checkSubmissionStatus) return;
+
+      try {
+        const status = await getAssignedFormStatus(config.formId);
+        if (isMounted) setFormStatus(status);
+      } catch (error) {
+        console.error("Error checking form status:", error);
+      } finally {
+        if (isMounted) setIsCheckingStatus(false);
+      }
+    }
+
+    loadStatus();
+    return () => {
+      isMounted = false;
+    };
+  }, [config.checkSubmissionStatus, config.formId]);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getQuickStartInitialValues(config.progressStorageKey, mapQuickStartGroupDataToFormValues)
+      .then((values) => {
+        if (isMounted) setInitialValues(values);
+      })
+      .catch(() => {});
+
+    return () => {
+      isMounted = false;
+    };
+  }, [config.progressStorageKey]);
+
+  const handleSave = async (values: FormValues) => {
+    saveFormProgress(config.progressStorageKey, values);
+  };
+
+  const handleSubmit = async (values: FormValues, mappedPayloads?: Record<string, unknown>) => {
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const processedValues = await uploadQuickStartFiles(values);
+      await submitPortalForm(config.formId, config.formName, processedValues, mappedPayloads);
+      clearFormProgress(config.progressStorageKey);
+      setIsSuccess(true);
+      setTimeout(() => {
+        router.push("/?formSubmitted=true");
+        router.refresh();
+      }, 2000);
+    } catch (error) {
+      console.error("Form submission error:", error);
+      setSubmitError(error instanceof Error ? error.message : "An error occurred while submitting the form. Please try again.");
+      setIsSubmitting(false);
+    }
+  };
+
+  const hasSubmittedStatus = formStatus === FormStatus.SUBMITTED || formStatus === FormStatus.COMPLETED;
+
+  return {
+    canRenderForm: !isCheckingStatus && !hasSubmittedStatus,
+    clearSubmitError: () => setSubmitError(""),
+    formStatus,
+    handleSave,
+    handleSubmit,
+    hasSubmittedStatus,
+    initialValues,
+    isCheckingStatus,
+    isSubmitting,
+    isSuccess,
+    submitError,
+  };
+}

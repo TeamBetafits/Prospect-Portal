@@ -22,17 +22,17 @@ export default function GlassdoorInsights({ data }: Props) {
     const hasData = glassdoorData.totalReviews && glassdoorData.totalReviews > 0;
 
     return (
-        <div className="bg-brand-900 rounded-[28px] p-8 text-white relative overflow-hidden">
+        <div className="bg-primary-900 rounded-md p-8 text-white relative overflow-hidden">
             <div className="relative z-10">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h2 className="text-[20px] font-bold mb-1">Glassdoor Insights</h2>
-                        <p className="text-brand-400 text-[13px]">External reputation signals and ratings</p>
+                        <p className="text-primary-400 text-[13px]">External reputation signals and ratings</p>
                     </div>
                     {hasData && (
                         <div className="text-right">
                             <div className="text-[32px] font-bold">{glassdoorData.overallRating?.toFixed(1)}</div>
-                            <div className="text-[12px] text-brand-300">Overall Rating</div>
+                            <div className="text-[12px] text-primary-300">Overall Rating</div>
                         </div>
                     )}
                 </div>
@@ -40,7 +40,7 @@ export default function GlassdoorInsights({ data }: Props) {
                 {hasData ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div>
-                            <span className="text-[12px] font-bold text-brand-400 uppercase tracking-wider block mb-2">
+                            <span className="text-[12px] font-bold text-primary-400 uppercase tracking-wider block mb-2">
                                 Benefits Rating
                             </span>
                             <div className="flex items-center gap-2">
@@ -49,7 +49,7 @@ export default function GlassdoorInsights({ data }: Props) {
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <svg
                                             key={star}
-                                            className={`w-4 h-4 ${star <= (glassdoorData.benefitsRating || 0) ? 'text-yellow-400' : 'text-brand-700'}`}
+                                            className={`w-4 h-4 ${star <= (glassdoorData.benefitsRating || 0) ? 'text-yellow-400' : 'text-primary-700'}`}
                                             fill="currentColor"
                                             viewBox="0 0 20 20"
                                         >
@@ -60,7 +60,7 @@ export default function GlassdoorInsights({ data }: Props) {
                             </div>
                         </div>
                         <div>
-                            <span className="text-[12px] font-bold text-brand-400 uppercase tracking-wider block mb-2">
+                            <span className="text-[12px] font-bold text-primary-400 uppercase tracking-wider block mb-2">
                                 Health Insurance
                             </span>
                             <div className="flex items-center gap-2">
@@ -69,7 +69,7 @@ export default function GlassdoorInsights({ data }: Props) {
                                     {[1, 2, 3, 4, 5].map((star) => (
                                         <svg
                                             key={star}
-                                            className={`w-4 h-4 ${star <= (glassdoorData.healthInsuranceRating || 0) ? 'text-yellow-400' : 'text-brand-700'}`}
+                                            className={`w-4 h-4 ${star <= (glassdoorData.healthInsuranceRating || 0) ? 'text-yellow-400' : 'text-primary-700'}`}
                                             fill="currentColor"
                                             viewBox="0 0 20 20"
                                         >
@@ -80,7 +80,7 @@ export default function GlassdoorInsights({ data }: Props) {
                             </div>
                         </div>
                         <div>
-                            <span className="text-[12px] font-bold text-brand-400 uppercase tracking-wider block mb-2">
+                            <span className="text-[12px] font-bold text-primary-400 uppercase tracking-wider block mb-2">
                                 Total Reviews
                             </span>
                             <span className="text-[24px] font-bold">{glassdoorData.totalReviews?.toLocaleString()}</span>
@@ -88,7 +88,7 @@ export default function GlassdoorInsights({ data }: Props) {
                     </div>
                 ) : (
                     <div className="text-center py-8">
-                        <p className="text-brand-300 text-[14px]">
+                        <p className="text-primary-300 text-[14px]">
                             Glassdoor data will be available once company profile is enriched.
                         </p>
                     </div>

@@ -21,11 +21,11 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
     const getStatusStyle = (status: FormStatus) => {
         switch (status) {
             case FormStatus.COMPLETED:
-                return 'bg-brand-50 text-brand-700 border-brand-100';
+                return 'bg-primary-50 text-primary-700 border-primary-100';
             case FormStatus.IN_PROGRESS:
                 return 'bg-blue-50 text-blue-700 border-blue-100';
             case FormStatus.SUBMITTED:
-                return 'bg-gray-50 text-gray-700 border-gray-200';
+                return 'bg-neutral-50 text-neutral-700 border-neutral-200';
             default:
                 // Match Softr: Pink badge for "Not Started"
                 return 'bg-pink-100 text-pink-700 border-pink-200';
@@ -47,28 +47,28 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
         const formRouteMap: Record<string, string> = {
             // Fillout forms (4)
             'eBxXtLZdK4us': '/forms/quick-start', // Quick Start uses this route
-            'rZhiEaUEskus': '/forms/rzhieaueskus',
-            'gn6WNJPJKTus': '/forms/gn6wnjpjktus',
-            'urHF8xDu7eus': '/forms/urhf8xdu7eus',
+            'rZhiEaUEskus': '/forms/update-quickstart-current-benefits',
+            'gn6WNJPJKTus': '/forms/update-peo-hr',
+            'urHF8xDu7eus': '/forms/update-broker-role',
             
             // All other forms (13)
-            'rec4V98J6aPaM3u9H': '/forms/rec4v98j6apam3u9h',
-            'rec7NfuiBQ8wrEmu7': '/forms/rec7nfuibq8wremu7',
-            'recFVcfdoXkUjIcod': '/forms/recfvcfdoxkujicod',
-            'recFxyNqTLDdrxXN2': '/forms/recfxynqtlddrxxn2',
-            'recGrsR8Sdx96pckJ': '/forms/recgrsr8sdx96pckj',
-            'recKzuznmqq29uASl': '/forms/reckzuznmqq29uasl',
-            'recOE9pVakkobVzU7': '/forms/recoe9pvakkobvzu7',
-            'recOt6cX0t1DksDFT': '/forms/recot6cx0t1dksdft',
-            'recUnTZFK5UyfWqzm': '/forms/recuntzfk5uyfwqzm',
-            'recdjXjySYuYUGkdP': '/forms/recdjxjysyuyugkdp',
-            'rechTHxZIxS3bBcqF': '/forms/rechthxzixs3bbcqf',
-            'reclUQ6KhVzCssuVl': '/forms/recluq6khvzcssuvl',
-            'recmB9IdRhtgckvaY': '/forms/recmb9idrhtgckvay',
-            'recsLJiBVdED8EEbr': '/forms/recsljibvded8eebr',
-            'recufWIRuSFArZ9GG': '/forms/recufwirusfarz9gg',
-            'recxH9Jrk10bbqU58': '/forms/recxh9jrk10bbqu58',
-            'recySUNj6jv47SOKr': '/forms/recysunj6jv47sokr',
+            'rec4V98J6aPaM3u9H': '/forms/medical-coverage-survey',
+            'rec7NfuiBQ8wrEmu7': '/forms/workers-compensation',
+            'recFVcfdoXkUjIcod': '/forms/add-new-group',
+            'recFxyNqTLDdrxXN2': '/forms/benefits-administration',
+            'recGrsR8Sdx96pckJ': '/forms/benefits-compliance',
+            'recKzuznmqq29uASl': '/forms/peo-eor-assessment',
+            'recOE9pVakkobVzU7': '/forms/appoint-betafits',
+            'recOt6cX0t1DksDFT': '/forms/hr-tech',
+            'recUnTZFK5UyfWqzm': '/forms/comprehensive-intake',
+            'recdjXjySYuYUGkdP': '/forms/premiums-contribution-strategy',
+            'rechTHxZIxS3bBcqF': '/forms/basic-intake',
+            'reclUQ6KhVzCssuVl': '/forms/quick-start-new-benefits',
+            'recmB9IdRhtgckvaY': '/forms/benefits-pulse-survey',
+            'recsLJiBVdED8EEbr': '/forms/document-uploader',
+            'recufWIRuSFArZ9GG': '/forms/quick-start-alt',
+            'recxH9Jrk10bbqU58': '/forms/broker-role',
+            'recySUNj6jv47SOKr': '/forms/nda',
         };
 
         // Prefer linked Available Form ID (template ID) so we always use in-app route, not external URL
@@ -92,17 +92,17 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
         
         // Quick Start forms - prioritize by specific identifiers
         if (formNameLower.includes('quick start') && formNameLower.includes('multi-page')) {
-            return '/forms/ebxxtlzdk4us';
+            return '/forms/quick-start-current-benefits';
         }
         if (formNameLower.includes('quick start') && formNameLower.includes('current benefits')) {
-            return '/forms/ebxxtlzdk4us';
+            return '/forms/quick-start-current-benefits';
         }
         if (formNameLower.includes('quick start') && formNameLower.includes('new benefits')) {
-            return '/forms/recluq6khvzcssuvl';
+            return '/forms/quick-start-new-benefits';
         }
         if (formNameLower.includes('quick start') || formNameLower.includes('quickstart')) {
             if (formNameLower.includes('update')) {
-                return '/forms/rzhieaueskus';
+                return '/forms/update-quickstart-current-benefits';
             }
             // Default Quick Start should use the main form (eBxXtLZdK4us)
             return '/forms/quick-start'; // This routes to /forms/quick-start which uses eBxXtLZdK4us
@@ -110,59 +110,59 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
         
         // PEO/HR form
         if (formNameLower.includes('peo/hr') || (formNameLower.includes('peo') && formNameLower.includes('update'))) {
-            return '/forms/gn6wnjpjktus';
+            return '/forms/update-peo-hr';
         }
         if (formNameLower.includes('peo/eor') || formNameLower.includes('peo eor')) {
-            return '/forms/reckzuznmqq29uasl';
+            return '/forms/peo-eor-assessment';
         }
         
         // Broker Role form
         if (formNameLower.includes('broker role') && formNameLower.includes('update')) {
-            return '/forms/urhf8xdu7eus';
+            return '/forms/update-broker-role';
         }
         if (formNameLower.includes('broker role') || formNameLower.includes('broker')) {
-            return '/forms/recxh9jrk10bbqu58';
+            return '/forms/broker-role';
         }
         
         // Other specific forms
         if (formNameLower.includes('medical coverage')) {
-            return '/forms/rec4v98j6apam3u9h';
+            return '/forms/medical-coverage-survey';
         }
         if (formNameLower.includes('workers compensation')) {
-            return '/forms/rec7nfuibq8wremu7';
+            return '/forms/workers-compensation';
         }
         if (formNameLower.includes('add new group')) {
-            return '/forms/recfvcfdoxkujicod';
+            return '/forms/add-new-group';
         }
         if (formNameLower.includes('benefits administration')) {
-            return '/forms/recfxynqtlddrxxn2';
+            return '/forms/benefits-administration';
         }
         if (formNameLower.includes('benefits compliance')) {
-            return '/forms/recgrsr8sdx96pckj';
+            return '/forms/benefits-compliance';
         }
         if (formNameLower.includes('appoint betafits')) {
-            return '/forms/recoe9pvakkobvzu7';
+            return '/forms/appoint-betafits';
         }
         if (formNameLower.includes('hr tech')) {
-            return '/forms/recot6cx0t1dksdft';
+            return '/forms/hr-tech';
         }
         if (formNameLower.includes('comprehensive intake')) {
-            return '/forms/recuntzfk5uyfwqzm';
+            return '/forms/comprehensive-intake';
         }
         if (formNameLower.includes('premiums') || formNameLower.includes('contribution strategy')) {
-            return '/forms/recdjxjysyuyugkdp';
+            return '/forms/premiums-contribution-strategy';
         }
         if (formNameLower.includes('basic intake')) {
-            return '/forms/rechthxzixs3bbcqf';
+            return '/forms/basic-intake';
         }
         if (formNameLower.includes('benefits pulse survey')) {
-            return '/forms/recmb9idrhtgckvay';
+            return '/forms/benefits-pulse-survey';
         }
         if (formNameLower.includes('document uploader')) {
-            return '/forms/recsljibvded8eebr';
+            return '/forms/document-uploader';
         }
         if (formNameLower === 'nda') {
-            return '/forms/recysunj6jv47sokr';
+            return '/forms/nda';
         }
         
         // Never use external URL as route when we have in-app forms; only use internal paths
@@ -323,7 +323,7 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
             {forms.length > formsPerPage && (
                 <div className="mt-6 flex items-center justify-between border-t border-neutral-100 pt-4">
                     <div className="text-label text-neutral-500">
-                        Showing {startIndex + 1} to {Math.min(endIndex, forms.length)} of {forms.length} forms
+                        Showing 1 - {Math.min(endIndex, forms.length)} of {forms.length} forms
                     </div>
                     <div className="flex items-center gap-1">
                         <button

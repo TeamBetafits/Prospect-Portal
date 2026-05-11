@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabaseClient } from '@/lib/supabaseClient';
 
 export interface AssignedForm {
     id: string;
@@ -27,29 +26,17 @@ export default function AddAssignedFormModal({ isOpen, onClose, onSubmit }: AddA
         const fetchForms = async () => {
             setIsLoading(true);
             try {
-                // Adjust columns as per your actual 'intake_available_forms' schema
-                const { data, error } = await supabaseClient
-                    .from('intake_available_forms')
-                    .select('id, display_name, description')
-                    .order('display_name');
-                
-                if (error) {
-                    console.error('Error fetching forms:', error);
-                } else if (data) {
-                    setAvailableForms(data.map((f: any) => ({
-                        id: f.id,
-                        displayName: f.display_name,
-                        description: f.description || '',
-                    })));
-                } else {
-                    // Fallback stub data if the table is empty or we can't fetch it
-                    setAvailableForms([
-                        { id: '1', displayName: 'Quick Start', description: 'Share your company and benefits information' },
-                        { id: '2', displayName: 'PEO/EOR Assessment', description: 'PEO/EOR Assessment details' },
-                    ]);
-                }
+                const response = await fetch('/api/forms/available');
+                if (!response.ok) throw new Error('Unable to fetch available forms');
+                const data = await response.json();
+                setAvailableForms(data.map((form: any) => ({
+                    id: form.id,
+                    displayName: form.name,
+                    description: form.description || '',
+                })));
             } catch (err) {
                 console.error('Fetch error:', err);
+                setAvailableForms([]);
             } finally {
                 setIsLoading(false);
             }

@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import AddNewUserModal, { NewUser } from './AddNewUserModal';
 import AddDocumentModal, { UploadedDocument } from './AddDocumentModal';
 import AddAssignedFormModal, { AssignedForm } from './AddAssignedFormModal';
-import { supabaseClient } from '@/lib/supabaseClient';
 
 export default function SupabaseCompanyDashboard() {
     const [companyName, setCompanyName] = useState('');
@@ -14,8 +13,10 @@ export default function SupabaseCompanyDashboard() {
     
     React.useEffect(() => {
         const fetchCompanies = async () => {
-            const { data } = await supabaseClient.from('companies').select('id, company_name').order('company_name');
-            if (data) setExistingCompanies(data);
+            const response = await fetch('/api/supabase/companies');
+            if (!response.ok) return;
+            const data = await response.json();
+            setExistingCompanies(data);
         };
         fetchCompanies();
     }, []);

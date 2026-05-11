@@ -34,7 +34,7 @@ export default function DentalPlansList({ plans }: Props) {
     if (plans.length === 0) {
         return (
             <div className="text-center py-12">
-                <p className="text-[14px] text-gray-500">No dental plans available.</p>
+                <p className="text-[14px] text-neutral-500">No dental plans available.</p>
             </div>
         );
     }
@@ -43,15 +43,15 @@ export default function DentalPlansList({ plans }: Props) {
         <>
             <div className="space-y-4">
                 {plans.map((plan) => (
-                    <div key={plan.id} className="bg-gray-50 border border-gray-200 rounded-xl p-6 hover:shadow-md transition-all group">
+                    <div key={plan.id} className="bg-neutral-50 border border-neutral-200 rounded-md p-6 hover:shadow-card transition-all group">
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                             <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 bg-green-50 text-green-600 rounded-xl flex items-center justify-center font-bold text-lg group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
+                                <div className="w-12 h-12 bg-green-50 text-green-600 rounded-md flex items-center justify-center font-bold text-lg group-hover:bg-primary-50 group-hover:text-primary-600 transition-colors">
                                     D
                                 </div>
                                 <div>
-                                    <h3 className="text-[18px] font-bold text-gray-900">{plan.name}</h3>
-                                    <p className="text-[13px] text-gray-500 font-medium">
+                                    <h3 className="text-[18px] font-bold text-neutral-900">{plan.name}</h3>
+                                    <p className="text-[13px] text-neutral-500 font-medium">
                                         {plan.carrier}
                                     </p>
                                 </div>
@@ -59,19 +59,19 @@ export default function DentalPlansList({ plans }: Props) {
                             <div className="flex items-center gap-4">
                                 <div className="flex flex-wrap gap-6 md:gap-12">
                                     <div>
-                                        <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                                        <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
                                             Deductible
                                         </span>
-                                        <span className="text-[15px] font-semibold text-gray-900">
+                                        <span className="text-[15px] font-semibold text-neutral-900">
                                             {plan.deductible}
                                         </span>
                                     </div>
                                     {plan.copay && (
                                         <div>
-                                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                                            <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">
                                                 Copay
                                             </span>
-                                            <span className="text-[15px] font-semibold text-gray-900">
+                                            <span className="text-[15px] font-semibold text-neutral-900">
                                                 {plan.copay}
                                             </span>
                                         </div>
@@ -80,13 +80,13 @@ export default function DentalPlansList({ plans }: Props) {
                                 <div className="flex gap-2">
                                     <button
                                         onClick={() => handleViewDetails(plan)}
-                                        className="px-4 py-2 bg-brand-600 text-white rounded-lg text-[13px] font-bold hover:bg-brand-700 transition-colors"
+                                        className="px-4 py-2 bg-primary-600 text-white rounded-md text-[13px] font-bold hover:bg-primary-700 transition-colors"
                                     >
                                         View Details
                                     </button>
                                     <button
                                         onClick={() => handleViewRates(plan)}
-                                        className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-[13px] font-bold hover:bg-gray-50 transition-colors"
+                                        className="px-4 py-2 bg-white border border-neutral-300 text-neutral-700 rounded-md text-[13px] font-bold hover:bg-neutral-50 transition-colors"
                                     >
                                         View Rates
                                     </button>

@@ -120,7 +120,6 @@ const PAGES_TO_ANALYZE = [
     { route: '/benefits-analysis', name: 'Benefits Analysis' },
     { route: '/benefit-budget', name: 'Benefit Budget' },
     { route: '/employee-feedback', name: 'Employee Feedback' },
-    { route: '/solutions-catalog', name: 'Solutions Catalog' },
     { route: '/appoint-betafits', name: 'Appoint Betafits' },
     { route: '/faq', name: 'FAQ' },
 ];

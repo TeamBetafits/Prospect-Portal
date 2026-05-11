@@ -1,181 +1,153 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
-import Image from 'next/image';
+import React from "react";
+import Image from "next/image";
+import { usePortalShell } from "@/shared/hooks/usePortalShell";
 
-const Sidebar: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
-  const profileMenuRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
-  const router = useRouter();
-  const { data: session } = useSession();
+interface Props {
+  shell: ReturnType<typeof usePortalShell>;
+}
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
-        setIsProfileMenuOpen(false);
-      }
-    };
-
-    if (isProfileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isProfileMenuOpen]);
-
-  const navItems = [
-    { id: 'home', name: 'Dashboard', path: '/', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
-    { id: 'company-details', name: 'Company Details', path: '/company-details', icon: 'M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' },
-    { id: 'benefit-plans', name: 'Benefit Plans', path: '/benefit-plans', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-    { id: 'benefits-analysis', name: 'Benefits Analysis', path: '/benefits-analysis', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
-    { id: 'employee-feedback', name: 'Employee Feedback', path: '/employee-feedback', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z' },
-    { id: 'faq', name: 'FAQ', path: '/faq', icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-  ];
-
-  const isActive = (path: string) => {
-    if (path === '/') {
-      return pathname === '/';
-    }
-    return pathname?.startsWith(path);
-  };
-
-  const handleNavigate = (path: string) => {
-    router.push(path);
-  };
-
-  const handleProfileClick = () => {
-    setIsProfileMenuOpen(!isProfileMenuOpen);
-  };
-
-  const handleProfileSettings = () => {
-    setIsProfileMenuOpen(false);
-    router.push('/account-settings');
-  };
-
-  const handleSignOut = async () => {
-    setIsProfileMenuOpen(false);
-    await signOut({ callbackUrl: '/login' });
-  };
+const Sidebar: React.FC<Props> = ({ shell }) => {
+  const userName =
+    shell.session?.user?.name || shell.session?.user?.email?.split("@")[0] || "User";
+  const userEmail = shell.session?.user?.email || "";
 
   return (
-    <aside className={`${isCollapsed ? 'w-24' : 'w-72'} border-r border-neutral-100 bg-white h-full hidden lg:flex flex-col flex-shrink-0 transition-all duration-300 relative`}>
-      {/* Toggle Button */}
-      <button 
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="absolute -right-3 top-4 bg-white border border-neutral-200 rounded-full p-1 shadow-card hover:border-neutral-300 transition-all z-20 text-neutral-400 hover:text-neutral-600"
-      >
-        <svg className={`w-3.5 h-3.5 transition-transform ${isCollapsed ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-
-      {/* Brand Header */}
-      <div className={`p-4 pb-2 flex items-center ${isCollapsed ? 'justify-center' : 'justify-start'}`}>
-        <Image 
-          src="/betafits-logo.png" 
-          alt="Betafits" 
-          width={isCollapsed ? 40 : 120}
-          height={isCollapsed ? 40 : 32}
-          className="flex-shrink-0 object-contain"
-          priority
+    <>
+      {shell.isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-neutral-900/50 backdrop-blur-sm z-40 lg:hidden animate-in fade-in duration-300"
+          onClick={shell.closeMobileMenu}
         />
-      </div>
+      )}
 
-      {/* Navigation */}
-      <div className="p-3 flex-1 overflow-y-auto pt-5 px-2">
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const active = isActive(item.path);
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavigate(item.path)}
-                className={`w-full h-10 flex items-center ${isCollapsed ? 'justify-center px-0' : 'gap-2 px-2'} rounded-medium transition-all duration-200 group font-semibold ${
-                  active 
-                    ? 'bg-neutral-100 text-neutral-900' 
-                    : 'text-neutral-500 hover:bg-neutral-50 hover:text-neutral-700'
-                }`}
-              >
-                <svg 
-                  className={`w-5 h-5 flex-shrink-0 transition-colors ${active ? 'text-neutral-900' : 'text-neutral-400 group-hover:text-neutral-600'}`} 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                </svg>
-                {!isCollapsed && <span className="text-body tracking-tight">{item.name}</span>}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* Footer Profile */}
-      <div className={`mt-auto p-3 border-t border-neutral-100 ${isCollapsed ? 'flex justify-center' : ''} relative`} ref={profileMenuRef}>
-        <div 
-          onClick={handleProfileClick}
-          className={`flex items-center ${isCollapsed ? 'justify-center' : 'gap-2 bg-neutral-50 p-2 w-full border border-neutral-100'} rounded-medium transition-all cursor-pointer group hover:bg-neutral-100`}
+      <aside
+        className={`
+          ${shell.isCollapsed ? "lg:w-20" : "lg:w-64"}
+          ${shell.isMobileMenuOpen ? "translate-x-0 w-64" : "-translate-x-full lg:translate-x-0"}
+          fixed lg:relative inset-y-0 left-0 border-r border-neutral-200 bg-white h-full flex flex-col flex-shrink-0 transition-all duration-300 z-50
+        `}
+      >
+        <button
+          onClick={shell.toggleCollapsed}
+          className="absolute -right-3 top-8 bg-white border border-neutral-200 rounded-full p-1.5 shadow-card hover:border-neutral-300 transition-all z-20 text-neutral-400 hover:text-neutral-600 hidden lg:block"
+          aria-label="Toggle sidebar"
         >
-          <div className="w-9 h-9 bg-primary-200 text-primary-800 flex items-center justify-center rounded-medium font-bold text-label flex-shrink-0">
-            {session?.user?.name?.charAt(0)?.toUpperCase() || session?.user?.email?.charAt(0)?.toUpperCase() || 'U'}
+          <svg
+            className={`w-3.5 h-3.5 transition-transform ${shell.isCollapsed ? "rotate-180" : ""}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+
+        <div className={`p-6 flex items-center ${shell.isCollapsed && !shell.isMobileMenuOpen ? "lg:justify-center" : "lg:justify-between"}`}>
+          <div className="flex items-center">
+            {shell.isCollapsed && !shell.isMobileMenuOpen ? (
+              <Image
+                src="/logo.png"
+                alt="Betafits Icon"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+            ) : (
+              <Image
+                src="/logo.png"
+                alt="Betafits Logo"
+                width={150}
+                height={40}
+                className="object-contain"
+              />
+            )}
           </div>
-          {!isCollapsed && (
-            <div className="flex flex-col min-w-0 flex-1">
-              <span className="text-small font-semibold text-neutral-900 truncate tracking-tight">
-                {session?.user?.name || 
-                 session?.user?.email?.split('@')[0] || 
-                 'User'}
-              </span>
-              <span className="text-small text-neutral-400 font-normal truncate">
-                {session?.user?.email || ''}
-              </span>
-            </div>
-          )}
-          {!isCollapsed && (
-            <svg 
-              className={`w-4 h-4 text-neutral-400 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} 
-              fill="none" 
-              viewBox="0 0 24 24" 
-              stroke="currentColor"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-            </svg>
+
+          {shell.isMobileMenuOpen && (
+            <button onClick={shell.closeMobileMenu} className="lg:hidden p-2 text-neutral-400 hover:text-neutral-600" aria-label="Close menu">
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           )}
         </div>
 
-        {/* Profile Dropdown Menu */}
-        {isProfileMenuOpen && !isCollapsed && (
-          <div className="absolute bottom-full left-3 right-3 mb-1 bg-white border border-neutral-200 rounded-medium shadow-elevated z-50 overflow-hidden">
-            <button
-              onClick={handleProfileSettings}
-              className="w-full h-10 px-2 text-left text-body text-neutral-700 hover:bg-neutral-50 transition-colors flex items-center gap-2"
-            >
-              <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+        <div className="p-4 flex-1 overflow-y-auto pt-6">
+          <nav className="space-y-1">
+            {shell.navItems.map((item) => {
+              const active = shell.isActive(item.path);
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => shell.navigate(item.path)}
+                  className={`w-full flex items-center ${shell.isCollapsed ? "lg:justify-center lg:px-0 px-3 gap-3" : "gap-3 px-3"} h-10 rounded-sm transition-all duration-200 group font-medium ${active
+                      ? "bg-primary-50 text-primary-700"
+                      : "text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
+                    }`}
+                >
+                  <svg
+                    className={`w-5 h-5 flex-shrink-0 transition-colors ${active ? "text-primary-600" : "text-neutral-400 group-hover:text-neutral-600"}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                  </svg>
+                  {(!shell.isCollapsed || shell.isMobileMenuOpen) && <span className="text-[14px] tracking-tight">{item.name}</span>}
+                </button>
+              );
+            })}
+          </nav>
+        </div>
+
+        <div className={`mt-auto p-4 border-t border-neutral-200 relative ${shell.isCollapsed ? "lg:flex lg:justify-center" : ""}`} ref={shell.profileMenuRef}>
+          {shell.isProfileMenuOpen && (!shell.isCollapsed || shell.isMobileMenuOpen) && (
+            <div className="absolute bottom-full left-4 right-4 mb-2 bg-white border border-neutral-200 rounded-md shadow-modal overflow-hidden animate-in fade-in slide-in-from-bottom-2 duration-200 z-50">
+              <button
+                onClick={shell.openAccountSettings}
+                className="w-full text-left px-4 py-3 text-sm font-bold text-neutral-700 hover:bg-neutral-50 transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4 text-neutral-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                Profile Settings
+              </button>
+              <button
+                onClick={shell.signOutUser}
+                className="w-full text-left px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 border-t border-neutral-100"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+                Sign Out
+              </button>
+            </div>
+          )}
+
+          <div
+            onClick={shell.toggleProfileMenu}
+            className={`flex items-center ${shell.isCollapsed && !shell.isMobileMenuOpen ? "lg:justify-center" : "gap-3 bg-neutral-50 p-2 w-full border border-neutral-200"} rounded-md transition-all cursor-pointer group ${shell.isProfileMenuOpen ? "ring-2 ring-primary-500/20" : ""}`}
+          >
+            <div className="w-8 h-8 bg-[#CFE1AE] text-white flex items-center justify-center rounded-md font-bold text-[12px] flex-shrink-0 shadow-card">
+              {userName[0]?.toUpperCase() || "U"}
+            </div>
+            {(!shell.isCollapsed || shell.isMobileMenuOpen) && (
+              <div className="flex flex-col min-w-0 flex-1">
+                <span className="text-[13px] font-semibold text-neutral-900 truncate tracking-tight">{userName}</span>
+                <span className="text-[11px] text-neutral-500 font-medium truncate">{userEmail}</span>
+              </div>
+            )}
+            {(!shell.isCollapsed || shell.isMobileMenuOpen) && (
+              <svg className={`w-4 h-4 text-neutral-400 transition-transform ${shell.isProfileMenuOpen ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
-              Profile Settings
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="w-full h-10 px-2 text-left text-body text-error-500 hover:bg-error-bg transition-colors flex items-center gap-2 border-t border-neutral-100"
-            >
-              <svg className="w-4 h-4 text-error-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
-              Sign Out
-            </button>
+            )}
           </div>
-        )}
-      </div>
-    </aside>
+        </div>
+      </aside>
+    </>
   );
 };
 

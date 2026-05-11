@@ -1,8 +1,0 @@
-[
-  "Plan Name (Client)",
-  "Company Name",
-  "Intake - Automations",
-  "Link to Group Data",
-  "BG Deduction Frequency (from Link to Group Data)",
-  "Record ID (from Link to Group Data)"
-]

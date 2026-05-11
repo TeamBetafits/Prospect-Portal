@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabaseClient';
 
+const DOCUMENTS_BUCKET = 'files';
+
 export async function POST(request: Request) {
     try {
         const formData = await request.formData();
@@ -58,17 +60,39 @@ export async function POST(request: Request) {
 
         // 3. Insert Assigned Forms
         if (assignedForms.length > 0) {
-            const formsToInsert = assignedForms.map((f: any) => ({
-                company_id: companyId,
-                available_form_id: f.id,
-            }));
+            for (const form of assignedForms) {
+                const availableForm = await findAvailableForm(String(form.id));
+                if (!availableForm?.id) continue;
 
-            const { error: formsError } = await supabaseAdmin
-                .from('intake_assigned_forms')
-                .insert(formsToInsert);
+                const { data: existing, error: existingError } = await supabaseAdmin
+                    .from('intake_assigned_forms')
+                    .select('id')
+                    .eq('company_id', companyId)
+                    .eq('available_form_id', availableForm.id)
+                    .limit(1)
+                    .maybeSingle();
 
-            if (formsError) {
-                console.error('Error inserting assigned forms:', formsError);
+                if (existingError) {
+                    console.error('Error checking assigned form:', existingError);
+                    continue;
+                }
+
+                if (existing?.id) continue;
+
+                const { error: formsError } = await supabaseAdmin
+                    .from('intake_assigned_forms')
+                    .insert({
+                        company_id: companyId,
+                        available_form_id: availableForm.id,
+                        name: form.displayName || availableForm.display_name,
+                        status: 'Not Started',
+                        assigned: true,
+                        submitted: false,
+                    });
+
+                if (formsError) {
+                    console.error('Error inserting assigned form:', formsError);
+                }
             }
         }
 
@@ -82,16 +106,15 @@ export async function POST(request: Request) {
                 const fileExt = value.name.split('.').pop();
                 const fileName = `${companyId}/${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
 
-                // Use a 'documents' bucket by default - ensure this bucket exists in your Supabase dashboard!
                 const { data: uploadData, error: uploadError } = await supabaseAdmin
                     .storage
-                    .from('documents')
+                    .from(DOCUMENTS_BUCKET)
                     .upload(fileName, value);
 
                 if (uploadError) {
                     console.error('Error uploading file:', uploadError);
                 } else if (uploadData) {
-                    const { data: urlData } = supabaseAdmin.storage.from('documents').getPublicUrl(uploadData.path);
+                    const { data: urlData } = supabaseAdmin.storage.from(DOCUMENTS_BUCKET).getPublicUrl(uploadData.path);
                     
                     // 5. Upsert document record manually (no unique constraint on multiple columns)
                     const { data: existingDocs, error: checkError } = await supabaseAdmin
@@ -138,4 +161,27 @@ export async function POST(request: Request) {
         console.error('API Error:', error);
         return NextResponse.json({ error: error.message || 'Internal server error' }, { status: 500 });
     }
+}
+
+async function findAvailableForm(formId: string) {
+    const byAirtableId = await supabaseAdmin
+        .from('intake_available_forms')
+        .select('id, display_name')
+        .eq('airtable_id', formId)
+        .limit(1)
+        .maybeSingle();
+    if (byAirtableId.error) throw byAirtableId.error;
+    if (byAirtableId.data) return byAirtableId.data;
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(formId)) {
+        return null;
+    }
+
+    const byId = await supabaseAdmin
+        .from('intake_available_forms')
+        .select('id, display_name')
+        .eq('id', formId)
+        .limit(1)
+        .maybeSingle();
+    if (byId.error) throw byId.error;
+    return byId.data;
 }

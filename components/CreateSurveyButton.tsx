@@ -28,7 +28,7 @@ export default function CreateSurveyButton({ variant = 'header' }: CreateSurveyB
                 setIsCreating(false);
                 return;
             }
-            router.push('/forms/eq7fvu76pdus');
+            router.push('/forms/benefits-feedback');
         } catch {
             setError('Failed to create survey');
         } finally {
@@ -37,7 +37,7 @@ export default function CreateSurveyButton({ variant = 'header' }: CreateSurveyB
     };
 
     const handleOpenFormOnly = () => {
-        router.push('/forms/eq7fvu76pdus');
+        router.push('/forms/benefits-feedback');
     };
 
     if (variant === 'card') {
@@ -46,7 +46,7 @@ export default function CreateSurveyButton({ variant = 'header' }: CreateSurveyB
                 <button
                     onClick={handleCreateSurvey}
                     disabled={isCreating}
-                    className="w-full bg-brand-500 text-white rounded-lg py-3 px-4 font-bold text-[14px] hover:bg-brand-600 transition-all shadow-sm active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full bg-primary-500 text-white rounded-md py-3 px-4 font-bold text-[14px] hover:bg-primary-600 transition-all shadow-card active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     {isCreating ? (
                         <>
@@ -73,7 +73,7 @@ export default function CreateSurveyButton({ variant = 'header' }: CreateSurveyB
     return (
         <button
             onClick={handleOpenFormOnly}
-            className="bg-brand-500 text-white px-4 py-2 rounded-md font-semibold text-[13px] hover:bg-brand-600 transition-all shadow-sm active:scale-[0.98]"
+            className="bg-primary-500 text-white px-4 py-2 rounded-md font-semibold text-[13px] hover:bg-primary-600 transition-all shadow-card active:scale-[0.98]"
         >
             Open Form
         </button>

@@ -1,84 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/authOptions';
 import { getCompanyId } from '@/lib/auth/getCompanyId';
-import { fetchAirtableRecordById } from '@/lib/airtable/fetch';
-import { CompanyData } from '@/types';
+import { getCompanyData } from '@/lib/supabase/portal';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
     const companyId = await getCompanyId();
-    if (!companyId) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
-    }
+    if (!companyId) return NextResponse.json({ error: 'Company not found' }, { status: 404 });
 
-    const token = process.env.AIRTABLE_API_KEY;
-    if (!token) {
-      return NextResponse.json({ error: 'Airtable API key not configured' }, { status: 500 });
-    }
-
-    // Fetch company data from Intake - Group Data table
-    const tableId = 'tbliXJ7599ngxEriO'; // Intake - Group Data
-    const record = await fetchAirtableRecordById(tableId, companyId, {
-      apiKey: token,
-    });
-
-    if (!record) {
-      return NextResponse.json({ data: null }, { status: 200 });
-    }
-
-    const fields = record.fields;
-
-    // Map Airtable fields to CompanyData interface
-    const companyData: CompanyData = {
-      name: String(fields['Company Name'] || fields['Name'] || ''),
-      entityType: String(fields['Entity Type'] || ''),
-      legalName: String(fields['Entity Legal Name'] || fields['Legal Name'] || ''),
-      ein: String(fields['EIN'] || ''),
-      sicCode: String(fields['SIC Code'] || ''),
-      naicsCode: String(fields['NAICS Code'] || ''),
-      address: String(fields['HQ Address'] || fields['Address'] || ''),
-      renewalMonth: String(fields['Renewal Month'] || ''),
-      contact: {
-        firstName: String(fields['First Name'] || ''),
-        lastName: String(fields['Last Name'] || ''),
-        jobTitle: String(fields['Job Title'] || ''),
-        phone: String(fields['Phone Number'] || fields['Phone'] || ''),
-        email: String(fields['Work Email'] || fields['Email'] || ''),
-      },
-      workforce: {
-        totalEmployees: String(fields['Total Employees'] || ''),
-        usHqEmployees: String(fields['U.S. HQ Employees'] || ''),
-        hqCity: String(fields['HQ City'] || ''),
-        otherUsCities: Array.isArray(fields['Other US Cities']) ? fields['Other US Cities'] : [],
-        otherCountries: Array.isArray(fields['Other Countries']) ? fields['Other Countries'] : [],
-        openJobs: String(fields['Open Jobs'] || ''),
-        linkedInUrl: String(fields['LinkedIn URL'] || ''),
-      },
-      glassdoor: {
-        overallRating: parseFloat(String(fields['Glassdoor Overall Rating'] || '0')) || 0,
-        benefitsRating: parseFloat(String(fields['Glassdoor Benefits Rating'] || '0')) || 0,
-        healthInsuranceRating: parseFloat(String(fields['Glassdoor Health Insurance Rating'] || '0')) || 0,
-        retirementRating: parseFloat(String(fields['Glassdoor Retirement Rating'] || '0')) || 0,
-        overallReviews: parseInt(String(fields['Glassdoor Overall Reviews'] || '0')) || 0,
-        benefitsReviews: parseInt(String(fields['Glassdoor Benefits Reviews'] || '0')) || 0,
-        glassdoorUrl: String(fields['Glassdoor URL'] || ''),
-      },
-    };
-
-    return NextResponse.json({ data: companyData }, { status: 200 });
+    return NextResponse.json({ data: await getCompanyData(companyId) }, { status: 200 });
   } catch (error) {
     console.error('[Company Details API] Error:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch company details' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch company details' }, { status: 500 });
   }
 }

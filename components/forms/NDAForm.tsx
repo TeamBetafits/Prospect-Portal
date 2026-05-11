@@ -1,153 +1,389 @@
-'use client';
+// @ts-nocheck
+"use client";
 
-import React, { useState } from 'react';
-import { FormValues } from '@/types/form';
-import { NDA_FORM_DATA } from '@/constants/ndaForm';
-import FormSection from './FormSection';
+import React, { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import { mapNdaFormToSupabasePayloads } from "@/lib/mappings/ndaMapping";
 
-interface Props {
-    onSave: (values: FormValues) => Promise<void>;
-    onSubmit: (values: FormValues) => Promise<void>;
-    isSubmitting?: boolean;
-}
+const months = [
+  "January 1",
+  "February 1",
+  "March 1",
+  "April 1",
+  "May 1",
+  "June 1",
+  "July 1",
+  "August 1",
+  "September 1",
+  "October 1",
+  "November 1",
+  "December 1",
+];
 
-const NDAForm: React.FC<Props> = ({ onSave, onSubmit, isSubmitting = false }) => {
-    const [currentPage, setCurrentPage] = useState(0);
-    const [values, setValues] = useState<FormValues>({});
-    const [errors, setErrors] = useState<Record<string, string>>({});
-
-    const pages = NDA_FORM_DATA.pages;
-    const currentPageData = pages[currentPage];
-
-    const handleFieldChange = (questionId: string, value: any) => {
-        setValues((prev) => ({ ...prev, [questionId]: value }));
-        if (errors[questionId]) {
-            setErrors((prev) => {
-                const newErrors = { ...prev };
-                delete newErrors[questionId];
-                return newErrors;
-            });
-        }
-    };
-
-    const validatePage = (): boolean => {
-        const pageErrors: Record<string, string> = {};
-        currentPageData.sections.forEach((section) => {
-            section.questions.forEach((question) => {
-                if (question.required && !values[question.id]) {
-                    pageErrors[question.id] = question.validation?.[0]?.message || 'Field is required';
-                }
-            });
-        });
-        setErrors(pageErrors);
-        return Object.keys(pageErrors).length === 0;
-    };
-
-    const handleNext = () => {
-        if (validatePage()) {
-            setCurrentPage((prev) => Math.min(prev + 1, pages.length - 1));
-            onSave(values).catch(console.error);
-        }
-    };
-
-    const handlePrevious = () => {
-        setCurrentPage((prev) => Math.max(prev - 1, 0));
-    };
-
-    const handleSubmit = async () => {
-        if (validatePage()) {
-            await onSubmit(values);
-        }
-    };
-
-    return (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            {/* Progress Bar */}
-            <div className="px-8 pt-8 pb-4 bg-gray-50/50 border-b border-gray-100">
-                <div className="flex items-center justify-between mb-3">
-                    <span className="text-[13px] font-bold text-gray-700 uppercase tracking-wider">
-                        Step {currentPage + 1} of {pages.length}
-                    </span>
-                    <span className="text-[13px] text-gray-500 font-medium">
-                        {Math.round(((currentPage + 1) / pages.length) * 100)}% Complete
-                    </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                    <div
-                        className="bg-brand-500 h-full rounded-full transition-all duration-500 ease-out"
-                        style={{ width: `${((currentPage + 1) / pages.length) * 100}%` }}
-                    />
-                </div>
-            </div>
-
-            {/* Form Content */}
-            <div className="px-8 py-8 md:px-12 md:py-10">
-                <h2 className="text-[28px] font-bold text-gray-900 mb-8 tracking-tight leading-tight">
-                    {currentPageData.name}
-                </h2>
-
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    {currentPageData.sections.map((section) => (
-                        <FormSection
-                            key={section.id}
-                            section={section}
-                            values={values}
-                            errors={errors}
-                            onChange={handleFieldChange}
-                        />
-                    ))}
-                </div>
-            </div>
-
-            {/* Navigation */}
-            <div className="px-8 py-6 bg-gray-50/50 border-t border-gray-100 flex justify-between items-center">
-                <button
-                    onClick={handlePrevious}
-                    disabled={currentPage === 0}
-                    className={`px-6 py-2.5 rounded-lg text-[14px] font-semibold transition-all ${currentPage === 0
-                            ? 'opacity-0 pointer-events-none'
-                            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100 border border-transparent hover:border-gray-200'
-                        }`}
-                >
-                    Back
-                </button>
-                {currentPage < pages.length - 1 ? (
-                    <button
-                        onClick={handleNext}
-                        className="px-8 py-2.5 bg-brand-500 text-white rounded-lg text-[14px] font-bold hover:bg-brand-600 transition-all shadow-md active:scale-[0.98] flex items-center gap-2"
-                    >
-                        Next Step
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
-                        </svg>
-                    </button>
-                ) : (
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className="px-8 py-2.5 bg-brand-500 text-white rounded-lg text-[14px] font-bold hover:bg-brand-600 transition-all shadow-md active:scale-[0.98] flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-brand-500"
-                    >
-                        {isSubmitting ? (
-                            <>
-                                <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                </svg>
-                                Submitting...
-                            </>
-                        ) : (
-                            <>
-                                Submit Application
-                                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                </svg>
-                            </>
-                        )}
-                    </button>
-                )}
-            </div>
-        </div>
-    );
+const initialValues = {
+  ndaRequested: "",
+  companyLegalName: "",
+  entityStateFormation: "",
+  entityType: "",
+  userIsNdaSigner: "",
+  ndaSignerName: "",
+  ndaSignerTitle: "",
+  ndaSignerEmail: "",
+  legalNameOfEntity: "",
+  entityTypeDetailed: "",
+  entityStateFormationDetailed: "",
+  employerIdentificationNumber: "",
+  benefitStartMonth: "",
 };
 
-export default NDAForm;
+function FieldLabel({ children, required = false }) {
+  return (
+    <label className="mb-2 block text-[15px] font-medium text-slate-950">
+      {children}
+      {required ? <span className="ml-1 text-slate-500">*</span> : null}
+    </label>
+  );
+}
+
+function TextInput({ label, value, onChange, type = "text", required = false, error }) {
+  return (
+    <div className="w-full">
+      <FieldLabel required={required}>{label}</FieldLabel>
+      <input
+        type={type}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className={`h-11 w-full rounded-md border bg-white px-3 text-[15px] text-slate-900 outline-none transition focus:border-[#85b84a] focus:ring-2 focus:ring-[#85b84a]/20 ${
+          error ? "border-red-300" : "border-slate-300"
+        }`}
+      />
+      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
+    </div>
+  );
+}
+
+function RadioCards({ label, helper, value, onChange, required = false, error }) {
+  const options = ["Yes", "No"];
+
+  return (
+    <div className="w-full">
+      <FieldLabel required={required}>{label}</FieldLabel>
+      {helper ? <p className="-mt-1 mb-5 max-w-2xl text-[15px] leading-snug text-slate-400">{helper}</p> : null}
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        {options.map((option) => {
+          const selected = value === option;
+          return (
+            <button
+              key={option}
+              type="button"
+              onClick={() => onChange(option)}
+              className={`flex h-11 items-center rounded-md border px-4 text-left text-[15px] transition ${
+                selected
+                  ? "border-[#86b94d] bg-white ring-1 ring-[#86b94d]"
+                  : "border-slate-300 bg-white hover:border-slate-400"
+              }`}
+            >
+              <span
+                className={`mr-3 flex h-5 w-5 items-center justify-center rounded-full border ${
+                  selected ? "border-[#86b94d]" : "border-slate-300"
+                }`}
+              >
+                {selected ? <span className="h-3 w-3 rounded-full bg-[#86b94d]" /> : null}
+              </span>
+              <span className="text-slate-800">{option}</span>
+            </button>
+          );
+        })}
+      </div>
+      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
+    </div>
+  );
+}
+
+function SelectInput({ label, value, onChange, required = false, error }) {
+  return (
+    <div className="w-full">
+      <FieldLabel required={required}>{label}</FieldLabel>
+      <div className="relative">
+        <select
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          className={`h-11 w-full appearance-none rounded-md border bg-white px-3 pr-10 text-[15px] text-slate-900 outline-none transition focus:border-[#85b84a] focus:ring-2 focus:ring-[#85b84a]/20 ${
+            error ? "border-red-300" : "border-slate-300"
+          }`}
+        >
+          <option value="">Select a month</option>
+          {months.map((month) => (
+            <option key={month} value={month}>
+              {month}
+            </option>
+          ))}
+        </select>
+        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-lg leading-none text-slate-300">⌄</span>
+      </div>
+      {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
+    </div>
+  );
+}
+
+export default function NDAForm({ initialValues: loadedInitialValues = {}, onSubmit, isSubmitting = false, companyId = undefined }: any) {
+  const [values, setValues] = useState({ ...initialValues, ...loadedInitialValues });
+  const [submitted, setSubmitted] = useState(false);
+  const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    if (loadedInitialValues && Object.keys(loadedInitialValues).length) {
+      setValues((current) => ({ ...current, ...loadedInitialValues }));
+    }
+  }, [loadedInitialValues]);
+
+  const showNdaFields = values.ndaRequested === "Yes";
+  const showAlternateSigner = showNdaFields && values.userIsNdaSigner === "No";
+
+  const visibleValues = useMemo(() => {
+    if (values.ndaRequested === "No") {
+      return {
+        ndaRequested: values.ndaRequested,
+        benefitStartMonth: values.benefitStartMonth,
+      };
+    }
+
+    return {
+      ...values,
+      ...(values.userIsNdaSigner === "Yes"
+        ? {
+            ndaSignerName: "",
+            ndaSignerTitle: "",
+            ndaSignerEmail: "",
+          }
+        : {}),
+    };
+  }, [values]);
+
+  function updateField(field, nextValue) {
+    setValues((current) => {
+      const next = { ...current, [field]: nextValue };
+
+      if (field === "ndaRequested" && nextValue === "No") {
+        next.companyLegalName = "";
+        next.entityStateFormation = "";
+        next.entityType = "";
+        next.userIsNdaSigner = "";
+        next.ndaSignerName = "";
+        next.ndaSignerTitle = "";
+        next.ndaSignerEmail = "";
+        next.legalNameOfEntity = "";
+        next.entityTypeDetailed = "";
+        next.entityStateFormationDetailed = "";
+        next.employerIdentificationNumber = "";
+      }
+
+      if (field === "userIsNdaSigner" && nextValue === "Yes") {
+        next.ndaSignerName = "";
+        next.ndaSignerTitle = "";
+        next.ndaSignerEmail = "";
+      }
+
+      return next;
+    });
+
+    setErrors((current) => ({ ...current, [field]: undefined }));
+  }
+
+  function validate() {
+    const nextErrors = {};
+
+    if (!values.ndaRequested) {
+      nextErrors.ndaRequested = "Choose Yes or No.";
+    }
+
+    if (!values.benefitStartMonth) {
+      nextErrors.benefitStartMonth = "Select the benefit start month.";
+    }
+
+    if (showNdaFields && !values.userIsNdaSigner) {
+      nextErrors.userIsNdaSigner = "Choose Yes or No.";
+    }
+
+    if (showAlternateSigner) {
+      if (!values.ndaSignerName.trim()) nextErrors.ndaSignerName = "Enter the signer name.";
+      if (!values.ndaSignerTitle.trim()) nextErrors.ndaSignerTitle = "Enter the signer title.";
+      if (!values.ndaSignerEmail.trim()) {
+        nextErrors.ndaSignerEmail = "Enter the signer email.";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.ndaSignerEmail)) {
+        nextErrors.ndaSignerEmail = "Enter a valid email address.";
+      }
+    }
+
+    setErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  }
+
+  async function handleSubmit(event) {
+    event.preventDefault();
+    if (!validate()) return;
+
+    const mappedPayloads = mapNdaFormToSupabasePayloads(visibleValues, {
+      companyId: companyId ?? "00000000-0000-0000-0000-000000000000",
+    });
+
+    console.log("Submitted NDA intake", visibleValues);
+    console.log("Mapped NDA payloads", mappedPayloads);
+
+    try {
+      await onSubmit(visibleValues, mappedPayloads);
+      setSubmitted(true);
+    } catch (error) {
+      console.error("[NDAForm] Submit failed", error);
+    }
+  }
+
+  if (submitted) {
+    return (
+      <main className="flex min-h-screen items-start justify-center bg-[#f4f5f7] px-4 py-14 text-slate-950">
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-2 flex min-h-[230px] w-full max-w-[760px] flex-col items-center justify-center rounded-lg bg-white px-8 py-12 shadow-sm"
+        >
+          <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#f2f8e9]">
+            <span className="text-3xl font-bold leading-none text-[#86b94d]">✓</span>
+          </div>
+          <h1 className="text-center text-3xl font-bold tracking-tight text-slate-900">Thank you</h1>
+        </motion.section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-[#f4f5f7] px-4 py-10 text-slate-950">
+      <motion.form
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        onSubmit={handleSubmit}
+        className="mx-auto w-full max-w-[760px] rounded-lg bg-white px-8 py-7 shadow-sm"
+      >
+        <div className="space-y-5">
+          <RadioCards
+            label="Non - Disclosure Agreement (NDA) (Optional)"
+            helper="Would you like Betafits to sign an NDA before you upload any company and employee information. This will be sent separately via HelloSign."
+            value={values.ndaRequested}
+            onChange={(value) => updateField("ndaRequested", value)}
+            required
+            error={errors.ndaRequested}
+          />
+
+          {showNdaFields ? (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              className="space-y-5 overflow-hidden"
+            >
+              <TextInput
+                label="What is the company's full legal name?"
+                value={values.companyLegalName}
+                onChange={(value) => updateField("companyLegalName", value)}
+              />
+
+              <TextInput
+                label="What is the entity's state of formation?"
+                value={values.entityStateFormation}
+                onChange={(value) => updateField("entityStateFormation", value)}
+              />
+
+              <TextInput
+                label="What is the entity type?"
+                value={values.entityType}
+                onChange={(value) => updateField("entityType", value)}
+              />
+
+              <RadioCards
+                label="Will you be the signer for the NDA?"
+                value={values.userIsNdaSigner}
+                onChange={(value) => updateField("userIsNdaSigner", value)}
+                required
+                error={errors.userIsNdaSigner}
+              />
+
+              {showAlternateSigner ? (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-5"
+                >
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <TextInput
+                      label="Name of the NDA Signer"
+                      value={values.ndaSignerName}
+                      onChange={(value) => updateField("ndaSignerName", value)}
+                      required
+                      error={errors.ndaSignerName}
+                    />
+                    <TextInput
+                      label="Title of the NDA Signer"
+                      value={values.ndaSignerTitle}
+                      onChange={(value) => updateField("ndaSignerTitle", value)}
+                      required
+                      error={errors.ndaSignerTitle}
+                    />
+                  </div>
+
+                  <TextInput
+                    label="Email of the NDA Signer"
+                    type="email"
+                    value={values.ndaSignerEmail}
+                    onChange={(value) => updateField("ndaSignerEmail", value)}
+                    required
+                    error={errors.ndaSignerEmail}
+                  />
+                </motion.div>
+              ) : null}
+
+              <TextInput
+                label="What is the Legal Name of the Entity?"
+                value={values.legalNameOfEntity}
+                onChange={(value) => updateField("legalNameOfEntity", value)}
+              />
+
+              <TextInput
+                label="Entity Type (Corporation, LLC, etc.)"
+                value={values.entityTypeDetailed}
+                onChange={(value) => updateField("entityTypeDetailed", value)}
+              />
+
+              <TextInput
+                label="What is the Entity State of Formation?"
+                value={values.entityStateFormationDetailed}
+                onChange={(value) => updateField("entityStateFormationDetailed", value)}
+              />
+
+              <TextInput
+                label="Employer Identification Number"
+                value={values.employerIdentificationNumber}
+                onChange={(value) => updateField("employerIdentificationNumber", value)}
+              />
+            </motion.div>
+          ) : null}
+
+          <SelectInput
+            label="Expected Benefit Start Month or Renewal of Medical Coverage"
+            value={values.benefitStartMonth}
+            onChange={(value) => updateField("benefitStartMonth", value)}
+            required
+            error={errors.benefitStartMonth}
+          />
+
+          <div className="pt-1">
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="rounded-md bg-[#8abd4f] px-5 py-3 text-base font-semibold text-white transition hover:bg-[#7eae49] focus:outline-none focus:ring-2 focus:ring-[#8abd4f]/40 focus:ring-offset-2"
+            >
+              {isSubmitting ? "Submitting..." : "Submit"}
+            </button>
+          </div>
+        </div>
+      </motion.form>
+    </main>
+  );
+}

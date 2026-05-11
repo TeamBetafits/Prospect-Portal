@@ -1,6 +1,5 @@
-import React from 'react';
-import FAQ from '@/components/FAQ';
+import { FAQPage } from '@/page-modules/faq';
 
-export default function FAQPage() {
-  return <FAQ />;
+export default function Page() {
+  return <FAQPage />;
 }
