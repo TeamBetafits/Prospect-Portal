@@ -9,7 +9,7 @@ const BENEFITS_LINE_OF_COVERAGE_VALUES = new Set([
 ]);
 
 function normalizeText(value: any): string | null {
-  if (value == null) return null;
+  if (value == null || typeof value === "boolean") return null;
   const cleaned = String(value).trim();
   return cleaned.length ? cleaned : null;
 }
@@ -33,6 +33,23 @@ function normalizeBooleanWord(value: any): string | null {
   const text = normalizeText(value)?.toLowerCase();
   if (text === "yes") return "yes";
   if (text === "no") return "no";
+  return null;
+}
+
+// Converts a bare year ("2010") to a valid Postgres date ("2010-01-01").
+// Already-valid dates are validated and returned as-is. Null/invalid values return null.
+function normalizeYearToDate(value: any): string | null {
+  const text = normalizeText(value);
+  if (!text) return null;
+  if (/^\d{4}$/.test(text)) return `${text}-01-01`;
+  // Looks like a date — validate month and day ranges before passing through
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) {
+    const match = /^\d{4}-(\d{2})-(\d{2})/.exec(text)!;
+    const month = parseInt(match[1], 10);
+    const day = parseInt(match[2], 10);
+    if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+    return text;
+  }
   return null;
 }
 
@@ -124,7 +141,7 @@ function buildBenefitClassNotes(form: any): string[] | null {
     ...normalizeList(form.companyPackageConditions),
     normalizeText(form.companyPackageConditionsDetails),
     normalizeText(form.usesPeo) ? `uses_peo: ${normalizeText(form.usesPeo)}` : null,
-    normalizeText(form.peoUsed) ? `peo_used: ${normalizeText(form.peoUsed)}` : null,
+    normalizeText(form.usesPeo) && normalizeText(form.peoUsed) ? `peo_used: ${normalizeText(form.peoUsed)}` : null,
     normalizeList(form.peosEvaluated).length
       ? `peos_evaluated: ${normalizeList(form.peosEvaluated).join(" | ")}`
       : null,
@@ -179,7 +196,7 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
       ? {
           company_id: companyId,
           line_of_coverage: lineOfCoverage,
-          calendar_year: normalizeText(form.yearCompanyFounded),
+          calendar_year: normalizeYearToDate(form.yearCompanyFounded),
           updated_at: nowISO,
         }
       : null,
@@ -193,14 +210,14 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
         ? normalizeText(form.contributionToEmployee)
         : null,
       buyup_strategy: normalizeBooleanWord(form.percentageAppliesOnlyBasePlan),
-      base_plan: desiredPlanTypes[0] ?? null,
+      base_plan: desiredPlanTypes.find((p) => !NOISE_PLAN_OPTIONS.has(p)) ?? null,
       updated_at: nowISO,
     },
 
     medical_plans: selectedBenefits.includes("Medical")
       ? {
           company_id: companyId,
-          plan_name_client: normalizeText(form.medicalBenefitOfferTypeOther) ?? "Quick Start - Medical Plan",
+          plan_name_client: (form.medicalBenefitOfferType === "Other" ? normalizeText(form.medicalBenefitOfferTypeOther) : null) ?? "Quick Start - Medical Plan",
           plan_type: medicalShape?.plan_type ?? medicalBenefitOfferType,
           metallic_level: medicalShape?.metallic_level ?? null,
           hsa_qualified: medicalShape?.hsa_qualified ?? null,
