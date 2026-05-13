@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { describe, it } from "node:test";
+import { mapQuickStartFormToSupabasePayloads } from "../lib/mappings/quickStartMapping";
 
 describe("Supabase integration wiring", () => {
   it("uses the existing files storage bucket for portal document uploads", () => {
@@ -24,5 +25,48 @@ describe("Supabase integration wiring", () => {
     assert.match(migration, /alter table public\.documents_and_artifacts enable row level security/);
     assert.match(migration, /Portal users can read own documents/);
     assert.match(migration, /Portal users can read own medical plans/);
+  });
+
+  it("keeps Quick Start benefit class notes out of the benefits UUID field", () => {
+    const payloads = mapQuickStartFormToSupabasePayloads({
+      benefitsOffered: ["Medical"],
+      companyPackageConditions: ["Additional Entities"],
+      companyPackageConditionsDetails: "Test",
+      usesPeo: "No, we have never considered a PEO",
+    });
+
+    assert.equal("benefit_classes" in payloads.benefits, false);
+    assert.deepEqual(payloads.documents_and_artifacts[0].metadata.benefit_class_notes, [
+      "Additional Entities",
+      "Test",
+      "uses_peo: No, we have never considered a PEO",
+    ]);
+  });
+
+  it("maps Quick Start coverage to one valid benefits enum value", () => {
+    const payloads = mapQuickStartFormToSupabasePayloads({
+      benefitsOffered: ["Medical", "Dental", "Vision", "401(k)", "Other"],
+      benefitsOtherText: "Commuter",
+    });
+
+    assert.equal(payloads.benefits.line_of_coverage, "Medical");
+    assert.doesNotMatch(payloads.benefits.line_of_coverage, /,/);
+    assert.deepEqual(payloads.documents_and_artifacts[0].metadata.snapshot.benefitsOffered, [
+      "Medical",
+      "Dental",
+      "Vision",
+      "401(k)",
+      "Other",
+    ]);
+  });
+
+  it("omits the benefits row when Quick Start coverage is not a valid benefits enum value", () => {
+    const payloads = mapQuickStartFormToSupabasePayloads({
+      benefitsOffered: ["401(k)", "Other"],
+      benefitsOtherText: "Commuter",
+    });
+
+    assert.equal(payloads.benefits, null);
+    assert.deepEqual(payloads.documents_and_artifacts[0].metadata.snapshot.benefitsOffered, ["401(k)", "Other"]);
   });
 });

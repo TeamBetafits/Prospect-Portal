@@ -1,4 +1,12 @@
 const NOISE_PLAN_OPTIONS = new Set(["Not Sure", "Other"]);
+const BENEFITS_LINE_OF_COVERAGE_VALUES = new Set([
+  "Medical",
+  "Dental",
+  "Vision",
+  "Life",
+  "Disability",
+  "Voluntary Benefits",
+]);
 
 function normalizeText(value: any): string | null {
   if (value == null) return null;
@@ -47,9 +55,8 @@ function parseMedicalPlanShape(desiredPlanTypes: string[] = []) {
   };
 }
 
-function listToSentence(values: any): string | null {
-  const list = normalizeList(values);
-  return list.length ? list.join(", ") : null;
+function normalizeLineOfCoverage(values: any): string | null {
+  return normalizeList(values).find((value) => BENEFITS_LINE_OF_COVERAGE_VALUES.has(value)) ?? null;
 }
 
 function buildSubmissionSnapshot(form: any) {
@@ -112,7 +119,7 @@ function buildSubmissionSnapshot(form: any) {
   };
 }
 
-function buildBenefitClasses(form: any) {
+function buildBenefitClassNotes(form: any): string[] | null {
   const tokens = [
     ...normalizeList(form.companyPackageConditions),
     normalizeText(form.companyPackageConditionsDetails),
@@ -121,15 +128,16 @@ function buildBenefitClasses(form: any) {
     normalizeList(form.peosEvaluated).length
       ? `peos_evaluated: ${normalizeList(form.peosEvaluated).join(" | ")}`
       : null,
-  ].filter(Boolean);
+  ].filter(Boolean) as string[];
 
-  return tokens.length ? tokens.join("; ") : null;
+  return tokens.length ? tokens : null;
 }
 
 export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO?: string; companyId?: string } = {}) {
   const nowISO = options.nowISO || new Date().toISOString();
   const companyId = normalizeText(options.companyId);
   const selectedBenefits = normalizeList(form.benefitsOffered);
+  const lineOfCoverage = normalizeLineOfCoverage(selectedBenefits);
   const desiredPlanTypes = normalizeList(form.desiredPlanTypes);
   const medicalShape = parseMedicalPlanShape(desiredPlanTypes);
   const medicalBenefitOfferType = normalizeChoiceWithOther(
@@ -167,16 +175,14 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
       updated_at: nowISO,
     },
 
-    benefits: {
-      company_id: companyId,
-      line_of_coverage: listToSentence([
-        ...selectedBenefits,
-        normalizeText(form.benefitsOtherText),
-      ]),
-      benefit_classes: buildBenefitClasses(form),
-      calendar_year: normalizeText(form.yearCompanyFounded),
-      updated_at: nowISO,
-    },
+    benefits: lineOfCoverage
+      ? {
+          company_id: companyId,
+          line_of_coverage: lineOfCoverage,
+          calendar_year: normalizeText(form.yearCompanyFounded),
+          updated_at: nowISO,
+        }
+      : null,
 
     contribution_strategies: {
       company_id: companyId,
@@ -233,6 +239,7 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
         status: "Completed",
         metadata: {
           source_form: "quick_start_onboarding",
+          benefit_class_notes: buildBenefitClassNotes(form),
           snapshot: buildSubmissionSnapshot(form),
         },
         updated_at: nowISO,
