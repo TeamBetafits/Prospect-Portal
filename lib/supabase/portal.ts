@@ -258,11 +258,13 @@ export async function listDocuments(companyId: string): Promise<DocumentArtifact
 
   return rows.map((row) => ({
     id: row.id,
-    name: row.document_type || row.file_name || "Untitled Document",
+    name: asString(row.metadata?.title) || row.file_name || row.document_type || "Untitled Document",
     status: mapDocumentStatus(row.status),
     fileName: row.file_name || row.document_type || "document",
     date: row.created_at || row.updated_at || new Date().toISOString(),
     url: row.file_url || undefined,
+    documentType: row.document_type || undefined,
+    fileUrl: row.file_url || undefined,
   }));
 }
 

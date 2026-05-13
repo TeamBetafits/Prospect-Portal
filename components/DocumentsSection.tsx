@@ -28,6 +28,7 @@ function getStatusLabel(status: DocumentStatus) {
 }
 
 function getDocumentType(doc: DocumentArtifact) {
+  if (doc.documentType) return doc.documentType;
   if (doc.fileName?.includes(".")) {
     return doc.fileName.split(".").pop()?.toUpperCase() || "Document";
   }

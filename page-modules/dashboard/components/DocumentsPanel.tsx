@@ -28,6 +28,7 @@ function getStatusLabel(status: DocumentStatus) {
 }
 
 function getDocumentType(doc: DocumentArtifact) {
+  if (doc.documentType) return doc.documentType;
   if (doc.fileName?.includes(".")) {
     return doc.fileName.split(".").pop()?.toUpperCase() || "Document";
   }
@@ -40,7 +41,7 @@ function DocumentCard({ doc, onOpen }: { doc: DocumentArtifact; onOpen: (doc: Do
       <div className="flex justify-between items-start gap-4 w-full">
         <div className="flex-1 min-w-0">
           <h3 className="text-[15px] font-bold text-neutral-900 tracking-tight leading-tight break-words">{doc.name}</h3>
-          <p className="text-[12px] text-neutral-500 font-medium mt-1 truncate">{doc.fileName} · {getDocumentType(doc)}</p>
+          <p className="text-[12px] text-neutral-500 font-medium mt-1 truncate">{getDocumentType(doc)} · {doc.fileName}</p>
         </div>
         <div className="flex-shrink-0">
           <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border whitespace-nowrap ${getStatusStyle(doc.status)}`}>

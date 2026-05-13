@@ -121,9 +121,9 @@ function buildBenefitClasses(form: any) {
     normalizeList(form.peosEvaluated).length
       ? `peos_evaluated: ${normalizeList(form.peosEvaluated).join(" | ")}`
       : null,
-  ].filter(Boolean) as string[];
+  ].filter(Boolean);
 
-  return tokens.length ? tokens : null;
+  return tokens.length ? tokens.join("; ") : null;
 }
 
 export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO?: string; companyId?: string } = {}) {
