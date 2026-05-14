@@ -107,6 +107,15 @@ function asDate(value: unknown): string {
   return Number.isNaN(date.getTime()) ? "" : date.toISOString().split("T")[0];
 }
 
+function normalizeYearToDate(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const text = String(value).trim();
+  if (!text) return null;
+  if (/^\d{4}$/.test(text)) return `${text}-01-01`;
+  if (/^\d{4}-\d{2}-\d{2}/.test(text)) return text;
+  return null;
+}
+
 function pick(values: Json, ...keys: string[]): unknown {
   for (const key of keys) {
     const value = values[key];
@@ -654,7 +663,7 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
     est_med_enrolled: pick(values, "estimatedMedicalEnrolledEEs", QUICK_START_IDS.medicalEnrolledEmployees),
     sic_code: pick(values, "sicCode", QUICK_START_IDS.sicCode),
     naics_code: pick(values, "naicsCode", QUICK_START_IDS.naicsCode),
-    company_founded_date: pick(values, "yearFounded", QUICK_START_IDS.yearFounded),
+    company_founded_date: normalizeYearToDate(pick(values, "yearFounded", QUICK_START_IDS.yearFounded)),
     peo_status: pick(values, "currentPEO"),
     ben_admin_platforms: pick(values, "currentHRSystem"),
     cobra_admin: pick(values, "cobraAdmin"),
