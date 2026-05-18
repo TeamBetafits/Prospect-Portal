@@ -663,7 +663,7 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
     est_med_enrolled: pick(values, "estimatedMedicalEnrolledEEs", QUICK_START_IDS.medicalEnrolledEmployees),
     sic_code: pick(values, "sicCode", QUICK_START_IDS.sicCode),
     naics_code: pick(values, "naicsCode", QUICK_START_IDS.naicsCode),
-    company_founded_date: normalizeYearToDate(pick(values, "yearFounded", QUICK_START_IDS.yearFounded)),
+    company_founded_date: normalizeYearToDate(pick(values, "yearFounded", "yearCompanyFounded", QUICK_START_IDS.yearFounded)),
     peo_status: pick(values, "currentPEO"),
     ben_admin_platforms: pick(values, "currentHRSystem"),
     cobra_admin: pick(values, "cobraAdmin"),
