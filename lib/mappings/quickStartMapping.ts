@@ -232,6 +232,7 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
       ? {
           company_id: companyId,
           plan_name_client: "Quick Start - Dental Plan",
+          plan_number: "Quick Start - Dental Plan",
           plan_type: "Dental",
           plan_year: String(new Date(nowISO).getUTCFullYear()),
           most_recent: "yes",
@@ -243,6 +244,7 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
       ? {
           company_id: companyId,
           plan_name_client: "Quick Start - Vision Plan",
+          plan_number: "Quick Start - Vision Plan",
           plan_year: String(new Date(nowISO).getUTCFullYear()),
           updated_at: nowISO,
         }
