@@ -51,13 +51,13 @@ describe("validateQuickStartRequiredFields", () => {
 // ─── benefit_classes / PEO ────────────────────────────────────────────────────
 
 describe("benefit_class_notes (PEO / package conditions)", () => {
-  it("is an array when PEO fields are filled", () => {
+  it("is a string when PEO fields are filled", () => {
     const result = mapQuickStartFormToSupabasePayloads(
       { ...BASE_VALID, companyPackageConditions: ["None of the Above"], usesPeo: "Yes", peoUsed: "Justworks", peosEvaluated: ["TriNet"] },
       OPTS
     );
-    const notes = result.documents_and_artifacts[0].metadata.benefit_class_notes;
-    assert.ok(Array.isArray(notes), "benefit_class_notes should be an array");
+    const notes = result.documents_and_artifacts[0].metadata.snapshot.benefitClassNotes;
+    assert.equal(typeof notes, "string", "benefitClassNotes should be a string");
     assert.ok(notes.includes("None of the Above"));
     assert.ok(notes.includes("uses_peo: Yes"));
     assert.ok(notes.includes("peo_used: Justworks"));
@@ -66,7 +66,7 @@ describe("benefit_class_notes (PEO / package conditions)", () => {
 
   it("is null when no PEO or package conditions provided", () => {
     const result = mapQuickStartFormToSupabasePayloads({ ...BASE_VALID }, OPTS);
-    assert.equal(result.documents_and_artifacts[0].metadata.benefit_class_notes, null);
+    assert.equal(result.documents_and_artifacts[0].metadata.snapshot.benefitClassNotes, null);
   });
 
   it("handles multiple peosEvaluated joined with pipe", () => {
@@ -74,11 +74,11 @@ describe("benefit_class_notes (PEO / package conditions)", () => {
       { ...BASE_VALID, peosEvaluated: ["TriNet", "Rippling", "Gusto"], usesPeo: "Yes" },
       OPTS
     );
-    const notes = result.documents_and_artifacts[0].metadata.benefit_class_notes;
-    const peoEntry = notes.find((n: string) => n.startsWith("peos_evaluated:"));
-    assert.ok(peoEntry.includes("TriNet"));
-    assert.ok(peoEntry.includes("Rippling"));
-    assert.ok(peoEntry.includes("Gusto"));
+    const notes: string = result.documents_and_artifacts[0].metadata.snapshot.benefitClassNotes;
+    const peoEntry = notes.split("\n").find((n: string) => n.startsWith("peos_evaluated:"));
+    assert.ok(peoEntry?.includes("TriNet"));
+    assert.ok(peoEntry?.includes("Rippling"));
+    assert.ok(peoEntry?.includes("Gusto"));
   });
 });
 

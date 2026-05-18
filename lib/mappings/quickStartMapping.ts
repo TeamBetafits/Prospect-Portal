@@ -136,7 +136,7 @@ function buildSubmissionSnapshot(form: any) {
   };
 }
 
-function buildBenefitClassNotes(form: any): string[] | null {
+function buildBenefitClassNotes(form: any): string | null {
   const tokens = [
     ...normalizeList(form.companyPackageConditions),
     normalizeText(form.companyPackageConditionsDetails),
@@ -147,7 +147,7 @@ function buildBenefitClassNotes(form: any): string[] | null {
       : null,
   ].filter(Boolean) as string[];
 
-  return tokens.length ? tokens : null;
+  return tokens.length ? tokens.join("\n") : null;
 }
 
 export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO?: string; companyId?: string } = {}) {
@@ -258,8 +258,10 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
         status: "Completed",
         metadata: {
           source_form: "quick_start_onboarding",
-          benefit_class_notes: buildBenefitClassNotes(form),
-          snapshot: buildSubmissionSnapshot(form),
+          snapshot: {
+            ...buildSubmissionSnapshot(form),
+            benefitClassNotes: buildBenefitClassNotes(form),
+          },
         },
         updated_at: nowISO,
       },
