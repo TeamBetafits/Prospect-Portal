@@ -38,7 +38,7 @@ function normalizeBooleanWord(value: any): string | null {
 
 // Converts a bare year ("2010") to a valid Postgres date ("2010-01-01").
 // Already-valid dates are validated and returned as-is. Null/invalid values return null.
-function normalizeYearToDate(value: any): string | null {
+export function normalizeYearToDate(value: any): string | null {
   const text = normalizeText(value);
   if (!text) return null;
   if (/^\d{4}$/.test(text)) return `${text}-01-01`;

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormStatus } from "@/types";
 import { FormValues } from "@/types/form";
+import { normalizeYearToDate } from "@/lib/mappings/quickStartMapping";
 import { clearFormProgress, saveFormProgress } from "@/page-modules/forms/services/formProgressService";
 import { getAssignedFormStatus, getQuickStartInitialValues } from "@/page-modules/forms/services/formStatusService";
 import { mapQuickStartGroupDataToFormValues } from "@/page-modules/forms/services/quickStartPrefill";
@@ -65,7 +66,11 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
 
     try {
       const processedValues = await uploadQuickStartFiles(values);
-      await submitPortalForm(config.formId, config.formName, processedValues, mappedPayloads);
+      const sanitizedValues = {
+        ...processedValues,
+        yearCompanyFounded: normalizeYearToDate(processedValues.yearCompanyFounded) ?? "",
+      };
+      await submitPortalForm(config.formId, config.formName, sanitizedValues, mappedPayloads);
       clearFormProgress(config.progressStorageKey);
       setIsSuccess(true);
       setTimeout(() => {
