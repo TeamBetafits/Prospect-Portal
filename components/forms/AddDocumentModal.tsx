@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { DOCUMENT_TYPES } from '@/constants/documentTypes';
 
 export interface UploadedDocument {
     file: File;
@@ -76,15 +77,11 @@ export default function AddDocumentModal({ isOpen, onClose, onSubmit }: AddDocum
                                 className="w-full px-4 py-2.5 rounded-md border border-gray-200 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none bg-white text-gray-800"
                             >
                                 <option value="">Select a document type...</option>
-                                <option value="Benefit Guide">Benefit Guide</option>
-                                <option value="Census Files">Census Files</option>
-                                <option value="Dental Plan Summary">Dental Plan Summary</option>
-                                <option value="Invoice">Invoice</option>
-                                <option value="Medical Invoice">Medical Invoice</option>
-                                <option value="Medical SBC">Medical SBC</option>
-                                <option value="Payroll Deductions">Payroll Deductions</option>
-                                <option value="renewal_documents">renewal_documents</option>
-                                <option value="Vision Plan Summary">Vision Plan Summary</option>
+                                {DOCUMENT_TYPES.map((type) => (
+                                    <option key={type} value={type}>
+                                        {type}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 

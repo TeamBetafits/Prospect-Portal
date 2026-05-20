@@ -2,6 +2,7 @@
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { ChevronDown, ChevronLeft, Upload, X, Pencil, Folder, Mic } from "lucide-react";
+import { DOCUMENT_TYPES } from "@/constants/documentTypes";
 import { mapQuickStartFormToSupabasePayloads, normalizeYearToDate } from "@/lib/mappings/quickStartMapping";
 
 const STEPS = ["Company Info", "Benefits", "Upload Documents", "Review"];
@@ -24,7 +25,6 @@ const IMPORTANCE_ROWS = ["Total Cost","Value for Money","Carrier Name/Market Sha
 const PAIN_POINTS = ["Lack of integration between HR and benefits systems of record","Too many carrier and vendor portals to manage","Open enrollment workload","Overall benefits strategy","Need better benchmarking against competitors","Healthcare benefits costs","Benefits compliance (ACA, COBRA, ERISA, HIPAA)","Poor perception of benefits by employees","Need better admin training","Benefits don’t feel aligned with company culture","Communication of benefits to employees","401(k) is siloed from other benefits","Want better experience for employees","Lack of expert guidance from broker/consultant","Other"];
 const QUESTIONNAIRE = ["We have done this before and would do it again","Open to it if it will save us money","Open to it if it is only for a few employees","Against it. Too invasive or too much of a hassle.","Not Sure"];
 const FEEDBACK = ["If it is an easy process let’s do that now","Interested for the future or when the timing is right","I prefer not to directly engage employees about this","I would need to think about it"];
-const DOC_TYPES = ["Benefit Guide","ERISA Wrap Document","Section 125 Document","Broker Commission Disclosure","W9","Quarterly Payroll Filing","Voided Check","Census Files","Payroll Deductions","Renewal","Medical SBC","Dental Plan Summary","Vision Plan Summary","Medical Invoice","Workbook","Workers Compensation","Claims Report","Dental & Vision Invoice","Dental Invoice","Vision Invoice","M/D/V Invoice","Invoice"];
 
 const defaultInitialValues = {
   firstName:"", lastName:"", title:"", phone:"", email:"", companyName:"", address:"", city:"", stateProvince:"", zipCode:"", ein:"", yearCompanyFounded:"", preferredSicCode:"", preferredNaicsCode:"", benefitEligibleEmployees:"", estimatedBenefitEligibleEes:"", estimatedMedicalEnrolledEes:"", expectedHeadcountGrowth:"", ndaRequested:"", ndaCompanyLegalName:"", entityType:"", stateOfFormation:"", ndaSigner:"",
@@ -121,7 +121,7 @@ function UploadModal({ initial, onClose, onSave }: any) {
   const [fileName, setFileName] = useState(initial?.fileName || "");
   const [file, setFile] = useState<File | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  return <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center p-4"><div className="w-full max-w-[650px] rounded-xl bg-white shadow-lg ring-1 ring-black/5 overflow-hidden"><div className="flex h-14 items-center justify-end border-b bg-white px-4"><button onClick={onClose} className="rounded-full p-2 hover:bg-zinc-100"><X size={24} /></button></div><div className="p-7"><Field label="Document Type"><Select options={DOC_TYPES} value={documentType} onChange={(e: any) => setDocumentType(e.target.value)} /></Field><p className="mt-4 text-[15px] text-zinc-700">To make sure everything is processed correctly, please upload <span className="font-semibold">one document at a time</span>. You can submit additional documents right after.</p><input ref={inputRef} type="file" className="hidden" onChange={(e) => {
+  return <div className="fixed inset-0 z-50 bg-black/20 flex items-center justify-center p-4"><div className="w-full max-w-[650px] rounded-xl bg-white shadow-lg ring-1 ring-black/5 overflow-hidden"><div className="flex h-14 items-center justify-end border-b bg-white px-4"><button onClick={onClose} className="rounded-full p-2 hover:bg-zinc-100"><X size={24} /></button></div><div className="p-7"><Field label="Document Type"><Select options={DOCUMENT_TYPES} value={documentType} onChange={(e: any) => setDocumentType(e.target.value)} /></Field><p className="mt-4 text-[15px] text-zinc-700">To make sure everything is processed correctly, please upload <span className="font-semibold">one document at a time</span>. You can submit additional documents right after.</p><input ref={inputRef} type="file" className="hidden" onChange={(e) => {
     if (e.target.files?.[0]) {
       setFile(e.target.files[0]);
       setFileName(e.target.files[0].name);

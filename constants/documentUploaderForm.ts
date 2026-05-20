@@ -1,4 +1,5 @@
 import { FormDataDefinition } from '@/types/form';
+import { DOCUMENT_TYPE_OPTIONS } from './documentTypes';
 
 /**
  * Document Uploader Form
@@ -32,13 +33,7 @@ export const DOCUMENT_UPLOADER_FORM_DATA: FormDataDefinition = {
                             type: 'select',
                             required: true,
                             placeholder: 'Select document type',
-                            options: [
-                                { value: 'benefit-guide', label: 'Benefit Guide' },
-                                { value: 'sbc', label: 'SBC/Plan Summary' },
-                                { value: 'census', label: 'Employee Census' },
-                                { value: 'contract', label: 'Contract' },
-                                { value: 'other', label: 'Other' }
-                            ],
+                            options: DOCUMENT_TYPE_OPTIONS,
                             validation: [{ type: 'required', message: 'Document type is required' }]
                         },
                         {
