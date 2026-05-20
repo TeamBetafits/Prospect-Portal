@@ -68,6 +68,14 @@ const FORM_ROUTE_BY_TEMPLATE_ID: Record<string, string> = {
   recySUNj6jv47SOKr: "/forms/nda",
 };
 
+const PORTAL_HIDDEN_AVAILABLE_FORM_IDS = new Set([
+  "jLwpyNvuB2us",
+  "reclUQ6KhVzCssuVl",
+  "recufWIRuSFArZ9GG",
+]);
+
+const CANONICAL_QUICK_START_TEMPLATE_ID = "eBxXtLZdK4us";
+
 const QUICK_START_IDS: Record<string, string> = {
   firstName: "qYvbJrrJqLQjqQnVip6c3N",
   lastName: "3khn37NbHQYb7CN6NPgrx2",
@@ -295,7 +303,7 @@ export async function listAssignedForms(companyId: string): Promise<AssignedForm
       .limit(100)
   );
 
-  return rows.map((row) => {
+  const forms = rows.map((row) => {
     const available = row.intake_available_forms || {};
     const templateId = available.airtable_id || row.airtable_id || row.available_form_id;
     return {
@@ -306,6 +314,55 @@ export async function listAssignedForms(companyId: string): Promise<AssignedForm
       availableFormId: templateId || row.available_form_id || undefined,
     };
   });
+
+  return dedupeAssignedForms(forms);
+}
+
+function dedupeAssignedForms(forms: AssignedForm[]): AssignedForm[] {
+  const groups = new Map<string, AssignedForm>();
+
+  for (const form of forms) {
+    const key = getAssignedFormDedupeKey(form);
+    const existing = groups.get(key);
+
+    if (!existing || shouldPreferAssignedForm(form, existing)) {
+      groups.set(key, form);
+    }
+  }
+
+  return Array.from(groups.values());
+}
+
+function getAssignedFormDedupeKey(form: AssignedForm): string {
+  const name = form.name.trim().toLowerCase();
+  const id = form.availableFormId || form.id;
+
+  if (
+    id === CANONICAL_QUICK_START_TEMPLATE_ID ||
+    PORTAL_HIDDEN_AVAILABLE_FORM_IDS.has(id) ||
+    name.includes("quick start") ||
+    name.includes("quickstart")
+  ) {
+    return "quick-start";
+  }
+
+  return id;
+}
+
+function shouldPreferAssignedForm(candidate: AssignedForm, current: AssignedForm): boolean {
+  const candidateScore = getAssignedFormPreferenceScore(candidate);
+  const currentScore = getAssignedFormPreferenceScore(current);
+  return candidateScore > currentScore;
+}
+
+function getAssignedFormPreferenceScore(form: AssignedForm): number {
+  let score = 0;
+
+  if (form.status === FormStatus.SUBMITTED || form.status === FormStatus.COMPLETED) score += 100;
+  if (form.availableFormId === CANONICAL_QUICK_START_TEMPLATE_ID) score += 20;
+  if (!PORTAL_HIDDEN_AVAILABLE_FORM_IDS.has(form.availableFormId || "")) score += 10;
+
+  return score;
 }
 
 export async function listAvailableForms(companyId?: string | null): Promise<AvailableForm[]> {
@@ -328,11 +385,30 @@ export async function listAvailableForms(companyId?: string | null): Promise<Ava
   return rows
     .filter((row) => !assignedIds.has(row.id))
     .filter((row) => !isRestrictedForm(row))
+    .filter((row) => !isPortalHiddenAvailableForm(row))
     .map((row) => ({
       id: row.airtable_id || row.id,
       name: row.display_name || "Available Form",
       description: row.description || row.intro_text || "",
     }));
+}
+
+export function isPortalHiddenAvailableForm(row: any): boolean {
+  const identifiers = [
+    row.id,
+    row.airtable_id,
+    extractFilloutTemplateId(asString(row.forms_url)),
+  ].filter(Boolean);
+
+  if (identifiers.some((id) => PORTAL_HIDDEN_AVAILABLE_FORM_IDS.has(String(id)))) {
+    return true;
+  }
+
+  return asString(row.name || row.display_name).trim().toLowerCase() === "quick start (new benefits)";
+}
+
+function extractFilloutTemplateId(url: string): string {
+  return url.match(/fillout\.com\/t\/([a-zA-Z0-9]+)/)?.[1] || "";
 }
 
 function isRestrictedForm(row: any): boolean {
