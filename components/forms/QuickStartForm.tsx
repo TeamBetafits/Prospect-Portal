@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
-import { ChevronDown, ChevronLeft, Upload, X, Pencil, Folder, Mic } from "lucide-react";
+import { ChevronDown, ChevronLeft, Upload, X, Pencil, Folder, Mic, CheckCircle } from "lucide-react";
 import { mapQuickStartFormToSupabasePayloads } from "@/lib/mappings/quickStartMapping";
 
 const STEPS = ["Company Info", "Benefits", "Upload Documents", "Review"];
@@ -135,13 +135,50 @@ function UploadDocumentsPage({ v, setV, next }: any) {
   return <><Card max="max-w-[700px]"><Accordion title="Document Uploader"><div className="space-y-5"><div className="rounded-md border border-blue-400 bg-blue-50 px-5 py-4 text-[15px] text-blue-600"><p>We recommend uploading your available benefits documents below to help us review your plan details.</p><p className="mt-4 font-semibold">Recommended Documents:</p><ul className="mt-4 list-disc space-y-3 pl-7"><li>Benefit Guide – helps us understand your available benefits, eligibility rules, and employee costs.</li><li>SBCs / Plan Summaries – allow us to benchmark your plan offerings for medical, dental, and vision coverage.</li><li>Insurance Invoices – let us analyze your current carrier rates and billing structure.</li><li>Broker Fee Disclosure – helps us identify above-market commissions and potential conflicts of interest.</li><li>Employee Census – enables us to audit your invoices and verify employee eligibility and costs.</li></ul></div><p className="text-[15px]">To upload a document, click the + Upload button below.</p>{v.uploadedDocuments.map((doc: any) => <div key={doc.id} className="flex items-center gap-3 rounded-md border border-zinc-300 px-4 py-3 text-[15px]"><span className="rounded-md border border-blue-300 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-600">{doc.status}</span><span className="flex-1">{doc.documentType}</span><button onClick={() => setEditing(doc)} className="inline-flex items-center gap-1 text-zinc-600 hover:text-zinc-900"><span>Edit</span><Pencil className="h-4 w-4" /></button><button onClick={() => setV((p: any) => ({ ...p, uploadedDocuments: p.uploadedDocuments.filter((d: any) => d.id !== doc.id) }))} className="rounded-full p-1 text-zinc-400 hover:bg-zinc-100"><X className="h-5 w-5" /></button></div>)}<button onClick={() => setEditing({})} className="inline-flex items-center gap-2 rounded-md border border-zinc-300 px-5 py-3 text-[15px] shadow-sm hover:bg-zinc-50 transition-colors"><Upload className="h-4 w-4" /> Upload</button></div></Accordion><Accordion title="Other Instructions"><div className="space-y-5"><div><p className="text-lg font-medium">Benefits I.Y.O.W. (In Your Own Words)</p><p className="text-zinc-400">Here you can record a message to discuss any additional information, pain points, priorities etc.</p><button className="mt-3 inline-flex items-center gap-2 rounded-md border border-zinc-300 px-5 py-3 text-[15px] shadow-sm hover:bg-zinc-50 transition-colors"><Mic className="h-5 w-5" /> Record</button></div><Field label="Is there anything else you would like us to know about your benefits package?"><Area value={v.benefitsNotes} onChange={(e: any) => setV((p: any) => ({ ...p, benefitsNotes: e.target.value }))} /></Field></div></Accordion><div className="mt-6 text-center"><button onClick={next} className="rounded-md bg-blue-500 px-8 py-3 font-semibold text-white hover:bg-blue-600 transition-colors">Next →</button></div></Card>{editing !== null ? <UploadModal initial={editing.id ? editing : null} onClose={() => setEditing(null)} onSave={saveUpload} /> : null}</>;
 }
 
+function reviewLabel(k: string): string {
+  const MAP: Record<string, string> = {
+    firstName: "First Name", lastName: "Last Name", title: "Title", phone: "Phone", email: "Email",
+    companyName: "Company Name", address: "Address", city: "City", stateProvince: "State / Province",
+    zipCode: "ZIP Code", ein: "EIN", yearCompanyFounded: "Year Company Founded",
+    preferredSicCode: "Preferred SIC Code", preferredNaicsCode: "Preferred NAICS Code",
+    benefitEligibleEmployees: "How many benefit-eligible US employees does the company have?",
+    estimatedBenefitEligibleEes: "Estimated Benefit Eligible EEs",
+    estimatedMedicalEnrolledEes: "Estimated Medical Enrolled EEs",
+    expectedHeadcountGrowth: "Expected Headcount Growth (next 12 months)",
+    ndaRequested: "NDA Requested", ndaCompanyLegalName: "NDA Company Legal Name",
+    entityType: "Entity Type", stateOfFormation: "State of Formation", ndaSigner: "NDA Signer",
+    benefitsOffered: "Benefits Offered", benefitsOtherText: "Benefits Other (specify)",
+    medicalBenefitOfferType: "Medical Benefit Offer Type",
+    medicalBenefitOfferTypeOther: "Medical Benefit Offer Type (specify)",
+    medicalContributionStrategy: "Medical Contribution Strategy",
+    contributionToEmployee: "Contribution to Employee",
+    contributionToDependents: "Contribution to Dependents",
+    percentageAppliesOnlyBasePlan: "Percentage Applies Only to Base Plan",
+    contributionStrategyDescription: "Contribution Strategy Description",
+    usesPeo: "Uses PEO", peoUsed: "PEO Used", peosEvaluated: "PEOs Evaluated",
+    payrollProvider: "Payroll Provider", payrollFrequency: "Payroll Frequency",
+    benefitDeductionFrequency: "Benefit Deduction Frequency",
+    companyPackageConditions: "Company Package Conditions",
+    companyPackageConditionsDetails: "Company Package Conditions Details",
+    idealMedicalPlanCount: "Ideal Medical Plan Count", desiredPlanTypes: "Desired Plan Types",
+    importanceRatings: "Importance Ratings", painPoints: "Pain Points",
+    questionnaireOpenness: "Questionnaire Openness",
+    employeeFeedbackPreference: "Employee Feedback Preference", benefitsNotes: "Benefits Notes",
+  };
+  return MAP[k] ?? k.replace(/([A-Z])/g, " $1").replace(/^./, (m) => m.toUpperCase());
+}
+
+function ThankYouModal({ onClose }: { onClose: () => void }) {
+  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div className="w-full max-w-[480px] rounded-2xl bg-white p-8 text-center shadow-xl ring-1 ring-black/5"><div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-green-100"><CheckCircle className="h-8 w-8 text-green-600" /></div><h2 className="text-2xl font-semibold text-slate-700">Thank you!</h2><p className="mt-3 text-zinc-500">Your Quick Start form has been submitted successfully. We&apos;ll review your information and reach out shortly.</p><button onClick={onClose} className="mt-6 rounded-md bg-blue-500 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-600">Done</button></div></div>;
+}
+
 function ReviewSection({ fields, values, onEdit }: any) {
   return <section className="border-t border-zinc-200 pt-5"><div className="mb-4 flex justify-end"><button onClick={onEdit} className="text-blue-600 hover:underline">Edit</button></div><div className="space-y-5">{fields.map((f: any) => <div key={f.label} className="grid grid-cols-[1.2fr_1fr] gap-6 text-[15px] max-md:grid-cols-1 max-md:gap-1"><div className="text-zinc-500">{f.label}</div><div className={fmt(values[f.key]) === "Unanswered" ? "italic text-zinc-300" : "text-zinc-700"}>{fmt(values[f.key])}</div></div>)}</div></section>;
 }
 
 function ReviewPage({ v, edit, submit, isSubmitting }: any) {
-  const company = ["firstName","lastName","title","phone","email","companyName","address","city","stateProvince","zipCode","ein","yearCompanyFounded","preferredSicCode","preferredNaicsCode","benefitEligibleEmployees","estimatedBenefitEligibleEes","estimatedMedicalEnrolledEes","expectedHeadcountGrowth","ndaRequested","ndaCompanyLegalName","entityType","stateOfFormation","ndaSigner"].map((k) => ({ key:k, label:k === "benefitEligibleEmployees" ? "How many benefit-eligible US employees does the company have?" : k.replace(/([A-Z])/g, " $1").replace(/^./, (m) => m.toUpperCase()) }));
-  const benefits = ["benefitsOffered","medicalBenefitOfferType","medicalContributionStrategy","contributionStrategyDescription","usesPeo","peosEvaluated","payrollProvider","payrollFrequency","benefitDeductionFrequency","companyPackageConditions","companyPackageConditionsDetails"].map((k) => ({ key:k, label:k.replace(/([A-Z])/g, " $1").replace(/^./, (m) => m.toUpperCase()) }));
+  const company = ["firstName","lastName","title","phone","email","companyName","address","city","stateProvince","zipCode","ein","yearCompanyFounded","preferredSicCode","preferredNaicsCode","benefitEligibleEmployees","estimatedBenefitEligibleEes","estimatedMedicalEnrolledEes","expectedHeadcountGrowth","ndaRequested","ndaCompanyLegalName","entityType","stateOfFormation","ndaSigner"].map((k) => ({ key:k, label:reviewLabel(k) }));
+  const benefits = ["benefitsOffered","benefitsOtherText","medicalBenefitOfferType","medicalBenefitOfferTypeOther","medicalContributionStrategy","contributionToEmployee","contributionToDependents","percentageAppliesOnlyBasePlan","contributionStrategyDescription","usesPeo","peoUsed","peosEvaluated","payrollProvider","payrollFrequency","benefitDeductionFrequency","companyPackageConditions","companyPackageConditionsDetails"].map((k) => ({ key:k, label:reviewLabel(k) }));
   const prefs = [
     { key:"idealMedicalPlanCount", label:"In your opinion, what is the ideal number of medical plan options you would like to offer?" },
     { key:"desiredPlanTypes", label:"Which of the following plan types do you think you would like to offer?" },
@@ -173,9 +210,10 @@ export default function QuickStartForm({
   const [page, setPage] = useState(1);
   const [values, setValues] = useState<any>({ ...defaultInitialValues, ...initialValues });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showThankYou, setShowThankYou] = useState(false);
   const isSubmitDisabled = isSubmitting || externalSubmitting;
 
-  // Sync initialValues if they come in late (e.g. from an API call)
+  // Sync initialValues if they come in late (e.g. from an API call / database prefill)
   useEffect(() => {
     if (initialValues && Object.keys(initialValues).length > 0) {
       setValues((prev: any) => ({ ...prev, ...initialValues }));
@@ -229,6 +267,7 @@ export default function QuickStartForm({
       if (onSubmit) {
         await onSubmit(finalValues, finalPayloads);
       }
+      setShowThankYou(true);
     } catch (err) {
       console.error("Submission error", err);
     } finally {
@@ -237,5 +276,5 @@ export default function QuickStartForm({
   };
 
   const progressStep = page <= 2 ? 1 : page <= 4 ? 2 : page === 5 ? 3 : 4;
-  return <div className="animate-in fade-in duration-500 min-h-[80vh] text-[#1F2937]"><div className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur -mx-4 px-4 md:-mx-8 md:px-8 mb-6 rounded-t-xl"><div className="mx-auto flex h-[60px] max-w-[1440px] items-center">{page > 1 && page < 7 ? <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} className="mr-4 rounded-full p-2 text-zinc-700 transition hover:bg-zinc-200"><ChevronLeft size={24} /></button> : <div className="mr-4 h-10 w-10" />}<div className="flex-1"><ProgressHeader step={progressStep} /></div></div></div><main className="pb-12">{page === 1 ? <IntroPage onStart={() => setPage(2)} /> : null}{page === 2 ? <CompanyPage v={values} setV={setValues} next={() => setPage(3)} /> : null}{page === 3 ? <BenefitsOverviewPage v={values} setV={setValues} next={() => setPage(4)} /> : null}{page === 4 ? <BenefitPreferencesPage v={values} setV={setValues} next={() => setPage(5)} /> : null}{page === 5 ? <UploadDocumentsPage v={values} setV={setValues} next={() => setPage(6)} /> : null}{page === 6 ? <ReviewPage v={values} edit={setPage} submit={handleSubmit} isSubmitting={isSubmitDisabled} /> : null}</main></div>;
+  return <>{showThankYou && <ThankYouModal onClose={() => setShowThankYou(false)} />}<div className="animate-in fade-in duration-500 min-h-[80vh] text-[#1F2937]"><div className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur -mx-4 px-4 md:-mx-8 md:px-8 mb-6 rounded-t-xl"><div className="mx-auto flex h-[60px] max-w-[1440px] items-center">{page > 1 && page < 7 ? <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} className="mr-4 rounded-full p-2 text-zinc-700 transition hover:bg-zinc-200"><ChevronLeft size={24} /></button> : <div className="mr-4 h-10 w-10" />}<div className="flex-1"><ProgressHeader step={progressStep} /></div></div></div><main className="pb-12">{page === 1 ? <IntroPage onStart={() => setPage(2)} /> : null}{page === 2 ? <CompanyPage v={values} setV={setValues} next={() => setPage(3)} /> : null}{page === 3 ? <BenefitsOverviewPage v={values} setV={setValues} next={() => setPage(4)} /> : null}{page === 4 ? <BenefitPreferencesPage v={values} setV={setValues} next={() => setPage(5)} /> : null}{page === 5 ? <UploadDocumentsPage v={values} setV={setValues} next={() => setPage(6)} /> : null}{page === 6 ? <ReviewPage v={values} edit={setPage} submit={handleSubmit} isSubmitting={isSubmitDisabled} /> : null}</main></div></>;
 }
