@@ -504,9 +504,9 @@ describe("year / date normalization", () => {
 });
 
 describe("companies payload", () => {
-  it("always sets customer_status to quick_start_submitted", () => {
+  it("always sets customer_status to Prospect", () => {
     const result = mapQuickStartFormToSupabasePayloads({ ...BASE_VALID }, OPTS);
-    assert.equal(result.companies.customer_status, "quick_start_submitted");
+    assert.equal(result.companies.customer_status, "Prospect");
   });
 
   it("carries companyId through to all sub-payloads", () => {

@@ -123,7 +123,7 @@ export const DOCUMENT_ARTIFACTS: DocumentArtifact[] = [
     name: 'Medical Invoice - September 2025',
     status: DocumentStatus.NOT_REVIEWED,
     fileName: 'Medical_Invoice_Sept.pdf',
-    documentType: 'Medical Invoice',
+    documentType: 'Insurance Invoice',
     date: 'Oct 19, 2025'
   }
 ];

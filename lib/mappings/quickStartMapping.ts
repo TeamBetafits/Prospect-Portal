@@ -169,7 +169,7 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
       sic_code: normalizeText(form.preferredSicCode),
       naics_code: normalizeText(form.preferredNaicsCode),
       payroll_platform: normalizeText(form.payrollProvider),
-      customer_status: "quick_start_submitted",
+      customer_status: "Prospect",
       updated_at: nowISO,
     },
 
