@@ -160,6 +160,103 @@ describe("plan payloads based on benefitsOffered", () => {
   });
 });
 
+// ─── Full submitted example ──────────────────────────────────────────────────
+
+describe("Think of Us quick start example", () => {
+  it("normalizes admin-facing rows and keeps a complete snapshot", () => {
+    const result = mapQuickStartFormToSupabasePayloads(
+      {
+        firstName: "Sarah",
+        lastName: "Chen",
+        title: "Director of People Operations",
+        phone: "(415) 555-7823",
+        email: "sarah.chen@thinkofus.org",
+        companyName: "Think of Us Test",
+        address: "1201 Connecticut Ave NW, Suite 200",
+        city: "Washington",
+        stateProvince: "District of Columbia",
+        zipCode: "20036",
+        ein: "81-3456789",
+        yearCompanyFounded: "2018",
+        preferredSicCode: "8322",
+        preferredNaicsCode: "624190",
+        benefitEligibleEmployees: "25 - 49",
+        estimatedBenefitEligibleEes: "28",
+        estimatedMedicalEnrolledEes: "25",
+        expectedHeadcountGrowth: "30",
+        ndaRequested: "yes",
+        ndaCompanyLegalName: "Think of Us Test LLC",
+        entityType: "Limited Liability Company (LLC)",
+        stateOfFormation: "District of Columbia",
+        ndaSigner: "yes",
+        benefitsOffered: ["Vision", "Medical", "Dental"],
+        medicalBenefitOfferType: "Level Funded",
+        medicalContributionStrategy: "Percentage Employer Contribution",
+        usesPeo: "Yes",
+        peosEvaluated: ["ADP TotalSource", "Insperity"],
+        payrollProvider: "Gusto",
+        payrollFrequency: "Semi-monthly",
+        benefitDeductionFrequency: "Semi-Monthly",
+        companyPackageConditions: ["Multiple Eligibility Classes", "Additional Entities", "Additional Locations"],
+        companyPackageConditionsDetails: "Additional Entities Additional Locations Multiple Eligibility Classes",
+        idealMedicalPlanCount: "3",
+        desiredPlanTypes: ["HDHP with HSA (Gold)", "HDHP with HSA (Bronze)", "PPO (Bronze)"],
+        importanceRatings: {
+          "Total Cost": "Very Important",
+          "Value for Money": "Very Important",
+        },
+        painPoints: [
+          "Lack of integration between HR and benefits systems of record",
+          "Too many carrier and vendor portals to manage",
+          "Open enrollment workload",
+        ],
+        questionnaireOpenness: "Open to it if it is only for a few employees",
+        employeeFeedbackPreference: "Interested for the future or when the timing is right",
+        uploadedDocuments: [{ id: "doc-1", documentType: "Invoice", fileName: "invoice.pdf", status: "Completed" }],
+      },
+      OPTS
+    );
+
+    assert.equal(result.companies.company_name, "Think of Us Test");
+    assert.equal(result.companies.sic_code, "8322");
+    assert.equal(result.companies.naics_code, "624190");
+    assert.deepEqual(result.users, {
+      company_id: "company-123",
+      first_name: "Sarah",
+      last_name: "Chen",
+      email: "sarah.chen@thinkofus.org",
+      job_title: "Director of People Operations",
+      updated_at: NOW,
+    });
+    assert.equal(result.contacts.client_contacts, "Sarah Chen");
+    assert.equal(result.contacts.phone, "(415) 555-7823");
+    assert.equal(result.entities.entity_legal_name, "Think of Us Test LLC");
+    assert.equal(result.entities.entity_type, "Limited Liability Company (LLC)");
+    assert.equal(result.entities.state_of_formation, "District of Columbia");
+    assert.equal(result.entities.ein, "81-3456789");
+    assert.equal(result.locations.address_1, "1201 Connecticut Ave NW, Suite 200");
+    assert.equal(result.locations.address_street, "1201 Connecticut Ave NW, Suite 200");
+    assert.equal(result.locations.state, "District of Columbia");
+    assert.equal(result.locations.headcount, "28");
+    assert.equal(result.benefits?.calendar_year, "2018-01-01");
+    assert.equal(result.contribution_strategies.contribution_type, "Percentage Employer Contribution");
+    assert.equal(result.medical_plans.plan_type, "HDHP");
+    assert.ok(result.dental_plans);
+    assert.ok(result.vision_plans);
+
+    const snapshot = result.documents_and_artifacts[0].metadata.snapshot;
+    assert.equal(snapshot.estimatedBenefitEligibleEes, "28");
+    assert.equal(snapshot.estimatedMedicalEnrolledEes, "25");
+    assert.deepEqual(snapshot.painPoints, [
+      "Lack of integration between HR and benefits systems of record",
+      "Too many carrier and vendor portals to manage",
+      "Open enrollment workload",
+    ]);
+    assert.equal(result.documents_and_artifacts[1].document_type, "Invoice");
+    assert.equal(result.documents_and_artifacts[1].file_name, "invoice.pdf");
+  });
+});
+
 // ─── Medical plan shape parsing ───────────────────────────────────────────────
 
 describe("medical plan type detection from desiredPlanTypes", () => {

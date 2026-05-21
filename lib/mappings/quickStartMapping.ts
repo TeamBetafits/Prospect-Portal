@@ -182,12 +182,34 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
       updated_at: nowISO,
     },
 
+    contacts: {
+      company_id: companyId,
+      client_contacts: [normalizeText(form.firstName), normalizeText(form.lastName)].filter(Boolean).join(" ") || null,
+      title: normalizeText(form.title),
+      phone: normalizeText(form.phone),
+      email: normalizeText(form.email),
+      primary_contact: normalizeText(form.firstName) || normalizeText(form.lastName) ? "Yes" : null,
+      updated_at: nowISO,
+    },
+
+    entities: {
+      company_id: companyId,
+      primary_entity: true,
+      entity_legal_name: normalizeText(form.ndaCompanyLegalName) ?? normalizeText(form.companyName),
+      entity_type: normalizeText(form.entityType),
+      state_of_formation: normalizeText(form.stateOfFormation),
+      ein: normalizeText(form.ein),
+      updated_at: nowISO,
+    },
+
     locations: {
       company_id: companyId,
+      address_1: normalizeText(form.address),
       address_street: normalizeText(form.address),
       city: normalizeText(form.city),
       state: normalizeText(form.stateProvince),
       zip_code: normalizeText(form.zipCode),
+      headcount: normalizeText(form.estimatedBenefitEligibleEes),
       primary_location: "yes",
       updated_at: nowISO,
     },
