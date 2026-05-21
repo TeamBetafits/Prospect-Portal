@@ -299,6 +299,7 @@ export async function listAssignedForms(companyId: string): Promise<AssignedForm
       .from("intake_assigned_forms")
       .select("*, intake_available_forms(*)")
       .eq("company_id", companyId)
+      .or("assigned.is.null,assigned.eq.true")
       .order("created_at", { ascending: true })
       .limit(100)
   );
