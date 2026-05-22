@@ -630,6 +630,10 @@ export async function updateCompanyData(companyId: string, body: Json): Promise<
     primary_location: true,
     address_street: pick(body, "address"),
   });
+
+  await upsertSingleton("policy_or_admin_configurations", companyId, {
+    renewal_month: pick(body, "renewalMonth"),
+  });
 }
 
 async function upsertSingleton(table: string, companyId: string, patch: Json): Promise<string | null> {
