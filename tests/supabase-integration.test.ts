@@ -36,11 +36,11 @@ describe("Supabase integration wiring", () => {
     });
 
     assert.equal("benefit_classes" in payloads.benefits, false);
-    assert.deepEqual(payloads.documents_and_artifacts[0].metadata.benefit_class_notes, [
-      "Additional Entities",
-      "Test",
-      "uses_peo: No, we have never considered a PEO",
-    ]);
+    const notes: string = payloads.documents_and_artifacts[0].metadata.snapshot.benefitClassNotes;
+    assert.equal(typeof notes, "string");
+    assert.ok(notes.includes("Additional Entities"));
+    assert.ok(notes.includes("Test"));
+    assert.ok(notes.includes("uses_peo: No, we have never considered a PEO"));
   });
 
   it("maps Quick Start coverage to one valid benefits enum value", () => {

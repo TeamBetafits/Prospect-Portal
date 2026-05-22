@@ -266,10 +266,10 @@ describe("normalizeLineOfCoverage — which benefit drives the benefits row", ()
 
 // ─── 7. buildBenefitClassNotes ────────────────────────────────────────────────
 
-describe("buildBenefitClassNotes — array shape and edge cases", () => {
+describe("buildBenefitClassNotes — string shape and edge cases", () => {
   const notes = (extra: object) =>
     mapQuickStartFormToSupabasePayloads({ ...BASE, ...extra }, OPTS)
-      .documents_and_artifacts[0].metadata.benefit_class_notes;
+      .documents_and_artifacts[0].metadata.snapshot.benefitClassNotes;
 
   it("returns null when nothing relevant provided", () => {
     assert.equal(notes({}), null);
@@ -277,9 +277,9 @@ describe("buildBenefitClassNotes — array shape and edge cases", () => {
 
   it("includes companyPackageConditions tokens", () => {
     const n = notes({ companyPackageConditions: ["Additional Entities", "Multiple Eligibility Classes"] });
-    assert.ok(Array.isArray(n));
-    assert.ok(n.includes("Additional Entities"));
-    assert.ok(n.includes("Multiple Eligibility Classes"));
+    assert.equal(typeof n, "string");
+    assert.ok(n!.includes("Additional Entities"));
+    assert.ok(n!.includes("Multiple Eligibility Classes"));
   });
 
   it("companyPackageConditionsDetails is included when not blank", () => {
@@ -294,13 +294,13 @@ describe("buildBenefitClassNotes — array shape and edge cases", () => {
 
   it("duplicate package conditions are deduplicated", () => {
     const n = notes({ companyPackageConditions: ["Additional Entities", "Additional Entities"] });
-    const count = n!.filter((t: string) => t === "Additional Entities").length;
+    const count = (n!.match(/Additional Entities/g) || []).length;
     assert.equal(count, 1);
   });
 
   it("multiple peosEvaluated joined with pipe", () => {
     const n = notes({ peosEvaluated: ["TriNet", "Gusto"], usesPeo: "Yes" });
-    const entry = n!.find((t: string) => t.startsWith("peos_evaluated:"));
+    const entry = n!.split("\n").find((t: string) => t.startsWith("peos_evaluated:"));
     assert.ok(entry?.includes("TriNet"));
     assert.ok(entry?.includes("Gusto"));
     assert.ok(entry?.includes("|"));
@@ -308,7 +308,7 @@ describe("buildBenefitClassNotes — array shape and edge cases", () => {
 
   it("empty strings in peosEvaluated are filtered out", () => {
     const n = notes({ peosEvaluated: ["", "TriNet", ""], usesPeo: "Yes" });
-    const entry = n!.find((t: string) => t.startsWith("peos_evaluated:"));
+    const entry = n!.split("\n").find((t: string) => t.startsWith("peos_evaluated:"));
     assert.ok(entry?.includes("TriNet"));
     assert.ok(!entry?.includes("||"));
   });
