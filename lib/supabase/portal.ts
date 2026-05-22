@@ -68,6 +68,14 @@ const FORM_ROUTE_BY_TEMPLATE_ID: Record<string, string> = {
   recySUNj6jv47SOKr: "/forms/nda",
 };
 
+const PORTAL_HIDDEN_AVAILABLE_FORM_IDS = new Set([
+  "jLwpyNvuB2us",
+  "reclUQ6KhVzCssuVl",
+  "recufWIRuSFArZ9GG",
+]);
+
+const CANONICAL_QUICK_START_TEMPLATE_ID = "eBxXtLZdK4us";
+
 const QUICK_START_IDS: Record<string, string> = {
   firstName: "qYvbJrrJqLQjqQnVip6c3N",
   lastName: "3khn37NbHQYb7CN6NPgrx2",
@@ -291,11 +299,12 @@ export async function listAssignedForms(companyId: string): Promise<AssignedForm
       .from("intake_assigned_forms")
       .select("*, intake_available_forms(*)")
       .eq("company_id", companyId)
+      .or("assigned.is.null,assigned.eq.true")
       .order("created_at", { ascending: true })
       .limit(100)
   );
 
-  return rows.map((row) => {
+  const forms = rows.map((row) => {
     const available = row.intake_available_forms || {};
     const templateId = available.airtable_id || row.airtable_id || row.available_form_id;
     return {
@@ -306,6 +315,55 @@ export async function listAssignedForms(companyId: string): Promise<AssignedForm
       availableFormId: templateId || row.available_form_id || undefined,
     };
   });
+
+  return dedupeAssignedForms(forms);
+}
+
+function dedupeAssignedForms(forms: AssignedForm[]): AssignedForm[] {
+  const groups = new Map<string, AssignedForm>();
+
+  for (const form of forms) {
+    const key = getAssignedFormDedupeKey(form);
+    const existing = groups.get(key);
+
+    if (!existing || shouldPreferAssignedForm(form, existing)) {
+      groups.set(key, form);
+    }
+  }
+
+  return Array.from(groups.values());
+}
+
+function getAssignedFormDedupeKey(form: AssignedForm): string {
+  const name = form.name.trim().toLowerCase();
+  const id = form.availableFormId || form.id;
+
+  if (
+    id === CANONICAL_QUICK_START_TEMPLATE_ID ||
+    PORTAL_HIDDEN_AVAILABLE_FORM_IDS.has(id) ||
+    name.includes("quick start") ||
+    name.includes("quickstart")
+  ) {
+    return "quick-start";
+  }
+
+  return id;
+}
+
+function shouldPreferAssignedForm(candidate: AssignedForm, current: AssignedForm): boolean {
+  const candidateScore = getAssignedFormPreferenceScore(candidate);
+  const currentScore = getAssignedFormPreferenceScore(current);
+  return candidateScore > currentScore;
+}
+
+function getAssignedFormPreferenceScore(form: AssignedForm): number {
+  let score = 0;
+
+  if (form.status === FormStatus.SUBMITTED || form.status === FormStatus.COMPLETED) score += 100;
+  if (form.availableFormId === CANONICAL_QUICK_START_TEMPLATE_ID) score += 20;
+  if (!PORTAL_HIDDEN_AVAILABLE_FORM_IDS.has(form.availableFormId || "")) score += 10;
+
+  return score;
 }
 
 export async function listAvailableForms(companyId?: string | null): Promise<AvailableForm[]> {
@@ -328,11 +386,30 @@ export async function listAvailableForms(companyId?: string | null): Promise<Ava
   return rows
     .filter((row) => !assignedIds.has(row.id))
     .filter((row) => !isRestrictedForm(row))
+    .filter((row) => !isPortalHiddenAvailableForm(row))
     .map((row) => ({
       id: row.airtable_id || row.id,
       name: row.display_name || "Available Form",
       description: row.description || row.intro_text || "",
     }));
+}
+
+export function isPortalHiddenAvailableForm(row: any): boolean {
+  const identifiers = [
+    row.id,
+    row.airtable_id,
+    extractFilloutTemplateId(asString(row.forms_url)),
+  ].filter(Boolean);
+
+  if (identifiers.some((id) => PORTAL_HIDDEN_AVAILABLE_FORM_IDS.has(String(id)))) {
+    return true;
+  }
+
+  return asString(row.name || row.display_name).trim().toLowerCase() === "quick start (new benefits)";
+}
+
+function extractFilloutTemplateId(url: string): string {
+  return url.match(/fillout\.com\/t\/([a-zA-Z0-9]+)/)?.[1] || "";
 }
 
 function isRestrictedForm(row: any): boolean {
@@ -589,6 +666,8 @@ export async function submitPortalForm(input: {
 }): Promise<{ submissionId: string; normalizedTargets: Json }> {
   const available = await findAvailableForm(input.formId);
   const normalizedTargets = await normalizeFormValues(input.companyId, input.formId, input.values, input.mappedPayloads);
+  const updatedUserId = await updateSubmittingUserFromForm(input.companyId, input.userId, input.values);
+  if (updatedUserId) normalizedTargets.users = updatedUserId;
 
   const { data, error } = await supabaseAdmin
     .from("form_submissions")
@@ -629,8 +708,8 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
 
   const companyPatch = cleanObject({
     company_name: pick(values, "companyName", "company", QUICK_START_IDS.companyName),
-    sic_code: pick(values, "sicCode", QUICK_START_IDS.sicCode),
-    naics_code: pick(values, "naicsCode", QUICK_START_IDS.naicsCode),
+    sic_code: pick(values, "preferredSicCode", "sicCode", QUICK_START_IDS.sicCode),
+    naics_code: pick(values, "preferredNaicsCode", "naicsCode", QUICK_START_IDS.naicsCode),
     updated_at: new Date().toISOString(),
   });
   if (Object.keys(companyPatch).length > 1) {
@@ -645,27 +724,30 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
   const entityId = await upsertSingleton("entities", companyId, {
     primary_entity: true,
     ein: pick(values, "ein", QUICK_START_IDS.ein),
-    entity_legal_name: pick(values, "legalName"),
+    entity_legal_name: pick(values, "ndaCompanyLegalName", "legalName", "companyName", QUICK_START_IDS.companyName),
     entity_type: pick(values, "entityType"),
+    state_of_formation: pick(values, "stateOfFormation"),
   });
   if (entityId) targets.entities = entityId;
 
   const locationId = await upsertSingleton("locations", companyId, {
     primary_location: true,
+    address_1: pick(values, "address", QUICK_START_IDS.address),
     address_street: pick(values, "address", QUICK_START_IDS.address),
     city: pick(values, "city", QUICK_START_IDS.city),
-    state: pick(values, "state", QUICK_START_IDS.state),
+    state: pick(values, "stateProvince", "state", QUICK_START_IDS.state),
     zip_code: pick(values, "zipCode", QUICK_START_IDS.zipCode),
+    headcount: pick(values, "estimatedBenefitEligibleEes", "estimatedBenefitEligibleEEs", "benefitEligibleEmployees", QUICK_START_IDS.benefitEligibleEmployees),
   });
   if (locationId) targets.locations = locationId;
 
   const otherId = await upsertSingleton("other_questions", companyId, {
-    est_med_enrolled: pick(values, "estimatedMedicalEnrolledEEs", QUICK_START_IDS.medicalEnrolledEmployees),
-    sic_code: pick(values, "sicCode", QUICK_START_IDS.sicCode),
-    naics_code: pick(values, "naicsCode", QUICK_START_IDS.naicsCode),
+    est_med_enrolled: pick(values, "estimatedMedicalEnrolledEes", "estimatedMedicalEnrolledEEs", QUICK_START_IDS.medicalEnrolledEmployees),
+    sic_code: pick(values, "preferredSicCode", "sicCode", QUICK_START_IDS.sicCode),
+    naics_code: pick(values, "preferredNaicsCode", "naicsCode", QUICK_START_IDS.naicsCode),
     company_founded_date: normalizeYearToDate(pick(values, "yearFounded", "yearCompanyFounded", QUICK_START_IDS.yearFounded)),
-    peo_status: pick(values, "currentPEO"),
-    ben_admin_platforms: pick(values, "currentHRSystem"),
+    peo_status: pick(values, "usesPeo", "currentPEO"),
+    ben_admin_platforms: pick(values, "payrollProvider", "currentHRSystem"),
     cobra_admin: pick(values, "cobraAdmin"),
   });
   if (otherId) targets.other_questions = otherId;
@@ -700,7 +782,7 @@ async function applyMappedPayloads(companyId: string, mappedPayloads: Json): Pro
       targets.companies = Object.keys(patch);
     }
   }
-  const singletonTables = ["entities", "locations", "benefits", "contribution_strategies", "medical_plans", "dental_plans", "vision_plans", "client_data"];
+  const singletonTables = ["contacts", "entities", "locations", "benefits", "contribution_strategies", "medical_plans", "dental_plans", "vision_plans", "client_data"];
   for (const table of singletonTables) {
     const payload = mappedPayloads[table];
     if (!payload) continue;
@@ -751,6 +833,28 @@ async function upsertContactFromForm(companyId: string, values: Json): Promise<s
     client_contacts: [firstName, lastName].filter(Boolean).join(" "),
     primary_contact: firstName || lastName ? "Yes" : undefined,
   });
+}
+
+async function updateSubmittingUserFromForm(companyId: string, userId: string | null, values: Json): Promise<string | null> {
+  if (!userId) return null;
+
+  const patch = cleanObject({
+    first_name: pick(values, "firstName", QUICK_START_IDS.firstName),
+    last_name: pick(values, "lastName", QUICK_START_IDS.lastName),
+    email: pick(values, "email", QUICK_START_IDS.email),
+    job_title: pick(values, "title", QUICK_START_IDS.title),
+  });
+
+  if (!Object.keys(patch).length) return null;
+
+  const { error } = await supabaseAdmin
+    .from("users")
+    .update(patch)
+    .eq("id", userId)
+    .eq("company_id", companyId);
+  if (error) throw error;
+
+  return userId;
 }
 
 async function insertBenefitsPulseSurvey(companyId: string, values: Json): Promise<string> {

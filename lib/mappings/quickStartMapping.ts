@@ -38,7 +38,7 @@ function normalizeBooleanWord(value: any): string | null {
 
 // Converts a bare year ("2010") to a valid Postgres date ("2010-01-01").
 // Already-valid dates are validated and returned as-is. Null/invalid values return null.
-function normalizeYearToDate(value: any): string | null {
+export function normalizeYearToDate(value: any): string | null {
   const text = normalizeText(value);
   if (!text) return null;
   if (/^\d{4}$/.test(text)) return `${text}-01-01`;
@@ -169,7 +169,7 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
       sic_code: normalizeText(form.preferredSicCode),
       naics_code: normalizeText(form.preferredNaicsCode),
       payroll_platform: normalizeText(form.payrollProvider),
-      customer_status: "quick_start_submitted",
+      customer_status: "Prospect",
       updated_at: nowISO,
     },
 
@@ -182,12 +182,34 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
       updated_at: nowISO,
     },
 
+    contacts: {
+      company_id: companyId,
+      client_contacts: [normalizeText(form.firstName), normalizeText(form.lastName)].filter(Boolean).join(" ") || null,
+      title: normalizeText(form.title),
+      phone: normalizeText(form.phone),
+      email: normalizeText(form.email),
+      primary_contact: normalizeText(form.firstName) || normalizeText(form.lastName) ? "Yes" : null,
+      updated_at: nowISO,
+    },
+
+    entities: {
+      company_id: companyId,
+      primary_entity: true,
+      entity_legal_name: normalizeText(form.ndaCompanyLegalName) ?? normalizeText(form.companyName),
+      entity_type: normalizeText(form.entityType),
+      state_of_formation: normalizeText(form.stateOfFormation),
+      ein: normalizeText(form.ein),
+      updated_at: nowISO,
+    },
+
     locations: {
       company_id: companyId,
+      address_1: normalizeText(form.address),
       address_street: normalizeText(form.address),
       city: normalizeText(form.city),
       state: normalizeText(form.stateProvince),
       zip_code: normalizeText(form.zipCode),
+      headcount: normalizeText(form.estimatedBenefitEligibleEes),
       primary_location: "yes",
       updated_at: nowISO,
     },

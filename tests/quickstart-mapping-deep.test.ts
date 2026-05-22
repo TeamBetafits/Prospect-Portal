@@ -417,10 +417,10 @@ describe("importanceRatings in snapshot", () => {
 // ─── 10. Payload structural invariants ───────────────────────────────────────
 
 describe("payload structural invariants", () => {
-  it("companies.customer_status is always 'quick_start_submitted'", () => {
+  it("companies.customer_status is always 'Prospect'", () => {
     assert.equal(
       mapQuickStartFormToSupabasePayloads({ ...BASE }, OPTS).companies.customer_status,
-      "quick_start_submitted"
+      "Prospect"
     );
   });
 

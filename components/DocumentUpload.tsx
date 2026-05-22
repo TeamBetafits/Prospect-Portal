@@ -13,20 +13,7 @@ import {
     Upload,
     X,
 } from 'lucide-react';
-
-const DOCUMENT_TYPES = [
-    'Benefit Guide',
-    'SBC',
-    'Plan Summary',
-    'Employee Census',
-    'Invoice',
-    'Renewal Document',
-    'Carrier Document',
-    'Rates Document',
-    'Claims Document',
-    'Contract',
-    'Other',
-] as const;
+import { DOCUMENT_TYPES } from '@/constants/documentTypes';
 
 const MAX_FILE_SIZE = 25 * 1024 * 1024;
 const ACCEPTED_EXTENSIONS = '.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.jpg,.jpeg,.png';
@@ -82,14 +69,14 @@ function formatFileSize(bytes: number) {
 function inferDocumentType(fileName: string) {
     const value = fileName.toLowerCase();
     if (value.includes('benefit') && value.includes('guide')) return 'Benefit Guide';
-    if (value.includes('sbc')) return 'SBC';
+    if (value.includes('sbc')) return 'Medical SBC';
     if (value.includes('summary') || value.includes('plan')) return 'Plan Summary';
     if (value.includes('census')) return 'Employee Census';
     if (value.includes('invoice')) return 'Invoice';
     if (value.includes('renewal')) return 'Renewal Document';
     if (value.includes('carrier')) return 'Carrier Document';
     if (value.includes('rate')) return 'Rates Document';
-    if (value.includes('claim')) return 'Claims Document';
+    if (value.includes('claim')) return 'Claims Report';
     if (value.includes('contract')) return 'Contract';
     return 'Other';
 }
