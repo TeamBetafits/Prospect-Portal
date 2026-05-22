@@ -12,12 +12,7 @@ interface Props {
 }
 
 const RatesModal: React.FC<{ plan: BenefitPlan; onClose: () => void }> = ({ plan, onClose }) => {
-  const tiers = [
-    { label: 'EE', premium: '$500', er: '$400', ee: '$100' },
-    { label: 'ES', premium: '$900', er: '$700', ee: '$200' },
-    { label: 'EC', premium: '$1,200', er: '$900', ee: '$300' },
-    { label: 'EF', premium: '$1,500', er: '$1,100', ee: '$400' },
-  ];
+  const tiers = plan.rates || [];
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-neutral-900/20 backdrop-blur-sm animate-in fade-in duration-300">
@@ -51,14 +46,20 @@ const RatesModal: React.FC<{ plan: BenefitPlan; onClose: () => void }> = ({ plan
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {tiers.map((tier, idx) => (
+              {tiers.length ? tiers.map((tier, idx) => (
                 <tr key={idx} className="hover:bg-neutral-50 transition-colors">
-                  <td className="py-5 text-[14px] font-bold text-neutral-900">{tier.label}</td>
-                  <td className="py-5 text-right text-[14px] font-bold text-neutral-900">{tier.premium}</td>
-                  <td className="py-5 text-right text-[14px] font-bold text-neutral-900 text-success-600">{tier.er}</td>
-                  <td className="py-5 text-right text-[14px] font-bold text-neutral-900 text-primary-600">{tier.ee}</td>
+                  <td className="py-5 text-[14px] font-bold text-neutral-900">{tier.tierLabel}</td>
+                  <td className="py-5 text-right text-[14px] font-bold text-neutral-900">{formatCurrency(tier.premium)}</td>
+                  <td className="py-5 text-right text-[14px] font-bold text-neutral-900 text-success-600">{formatCurrency(tier.employerContribution)}</td>
+                  <td className="py-5 text-right text-[14px] font-bold text-neutral-900 text-primary-600">{formatCurrency(tier.employeeContribution)}</td>
                 </tr>
-              ))}
+              )) : (
+                <tr>
+                  <td colSpan={4} className="py-10 text-center text-[14px] font-medium text-neutral-400">
+                    No rates have been mapped for this plan yet.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
@@ -229,6 +230,14 @@ const PlanDetailsModal: React.FC<{ plan: BenefitPlan; onClose: () => void }> = (
   );
 };
 
+function formatCurrency(value: number | undefined): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value || 0);
+}
+
 const PlanCard: React.FC<{ 
   plan: BenefitPlan; 
   onViewDetails: (plan: BenefitPlan) => void;
@@ -325,7 +334,7 @@ const BenefitPlans: React.FC<Props> = ({ eligibility, strategies, plans }) => {
   const [selectedPlan, setSelectedPlan] = useState<BenefitPlan | null>(null);
   const [selectedRatesPlan, setSelectedRatesPlan] = useState<BenefitPlan | null>(null);
 
-  if (!plans || plans.length === 0 || !eligibility) {
+  if (!plans || plans.length === 0) {
     return (
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
         <div className="flex flex-col">
@@ -361,10 +370,10 @@ const BenefitPlans: React.FC<Props> = ({ eligibility, strategies, plans }) => {
           
           <div className="space-y-6">
             {[
-              { label: 'Benefit Class', value: 'All Full-Time Employees' },
-              { label: 'Waiting Period', value: 'First of month following 30 days' },
-              { label: 'Eligibility Start Rule', value: 'First of month after waiting period' },
-              { label: 'Minimum Weekly Hours', value: '30 hours per week' }
+              { label: 'Benefit Class', value: eligibility?.className || 'All Full-Time Employees' },
+              { label: 'Waiting Period', value: eligibility?.waitingPeriod || 'Not mapped yet' },
+              { label: 'Eligibility Start Rule', value: eligibility?.effectiveDate || 'Not mapped yet' },
+              { label: 'Minimum Weekly Hours', value: eligibility?.requiredHours || 'Not mapped yet' }
             ].map((item, idx) => (
               <div key={idx} className="flex flex-col">
                 <div className="text-[13px] font-medium text-neutral-500 mb-1">{item.label}</div>
