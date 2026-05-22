@@ -2,6 +2,26 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCompanyId } from "@/lib/auth/getCompanyId";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 
+type AvailablePlanMetadata = {
+  id: string;
+  plan_name: string | null;
+  benefit_type: string | null;
+};
+
+type TiersAndRatesRow = {
+  id: string;
+  plan_id: string;
+  tier_key: string | null;
+  premium_ee: number | null;
+  premium_es: number | null;
+  premium_ec: number | null;
+  premium_ef: number | null;
+  premium_ee_user: number | null;
+  premium_es_user: number | null;
+  premium_ec_user: number | null;
+  premium_ef_user: number | null;
+};
+
 // ─── GET /api/tiers-and-rates ─────────────────────────────────────────────────
 // Returns all tiers_and_rates rows for the authenticated company.
 // tiers_and_rates has no company_id column — company is linked via plan_id →
@@ -29,9 +49,12 @@ export async function GET() {
       return NextResponse.json({ data: [] });
     }
 
-    const planIds = plans.map((p) => p.id);
-    const planMap: Record<string, { plan_name: string; benefit_type: string }> = {};
-    for (const p of plans) planMap[p.id] = { plan_name: p.plan_name, benefit_type: p.benefit_type };
+    const availablePlans = plans as AvailablePlanMetadata[];
+    const planIds = availablePlans.map((p) => p.id);
+    const planMap: Record<string, { plan_name: string | null; benefit_type: string | null }> = {};
+    for (const p of availablePlans) {
+      planMap[p.id] = { plan_name: p.plan_name, benefit_type: p.benefit_type };
+    }
 
     // 2. Get tiers_and_rates rows for those plan IDs
     const { data: tarRows, error: tarError } = await supabaseAdmin
@@ -51,7 +74,8 @@ export async function GET() {
     }
 
     // 3. Merge plan metadata into each row
-    const data = (tarRows ?? []).map((row) => ({
+    const rows = (tarRows ?? []) as unknown as TiersAndRatesRow[];
+    const data = rows.map((row) => ({
       ...row,
       plan_name: planMap[row.plan_id]?.plan_name ?? null,
       benefit_type: planMap[row.plan_id]?.benefit_type ?? null,

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
-import { ChevronDown, ChevronLeft, Upload, X, Pencil, Folder, Mic } from "lucide-react";
+import { CheckCircle, ChevronDown, ChevronLeft, Upload, X, Pencil, Folder, Mic } from "lucide-react";
 import { DOCUMENT_TYPES } from "@/constants/documentTypes";
 import { mapQuickStartFormToSupabasePayloads, normalizeYearToDate } from "@/lib/mappings/quickStartMapping";
 
