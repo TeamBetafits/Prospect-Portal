@@ -35,13 +35,25 @@ function getDocumentType(doc: DocumentArtifact) {
   return "Document";
 }
 
+function formatDocumentDate(date: string) {
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString(undefined, {
+    month: "numeric",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 function DocumentCard({ doc, onOpen }: { doc: DocumentArtifact; onOpen: (doc: DocumentArtifact) => void }) {
+  const subtitleParts = [getDocumentType(doc), formatDocumentDate(doc.date)].filter(Boolean);
+
   return (
     <div className="group bg-white border border-neutral-200 rounded-md p-5 shadow-card flex flex-col gap-3 hover:border-neutral-300 transition-all w-full">
       <div className="flex justify-between items-start gap-4 w-full">
         <div className="flex-1 min-w-0">
           <h3 className="text-[15px] font-bold text-neutral-900 tracking-tight leading-tight break-words">{doc.name}</h3>
-          <p className="text-[12px] text-neutral-500 font-medium mt-1 truncate">{getDocumentType(doc)} · {doc.fileName}</p>
+          <p className="text-[12px] text-neutral-500 font-medium mt-1 truncate">{subtitleParts.join(" · ")}</p>
         </div>
         <div className="flex-shrink-0">
           <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border whitespace-nowrap ${getStatusStyle(doc.status)}`}>
