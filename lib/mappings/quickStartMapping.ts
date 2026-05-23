@@ -204,12 +204,10 @@ export function mapQuickStartFormToSupabasePayloads(form: any, options: { nowISO
 
     locations: {
       company_id: companyId,
-      address_1: normalizeText(form.address),
       address_street: normalizeText(form.address),
       city: normalizeText(form.city),
       state: normalizeText(form.stateProvince),
       zip_code: normalizeText(form.zipCode),
-      headcount: normalizeText(form.estimatedBenefitEligibleEes),
       primary_location: "yes",
       updated_at: nowISO,
     },

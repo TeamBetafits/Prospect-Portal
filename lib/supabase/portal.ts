@@ -59,6 +59,7 @@ const FORM_ROUTE_BY_TEMPLATE_ID: Record<string, string> = {
   recOt6cX0t1DksDFT: "/forms/hr-tech",
   recUnTZFK5UyfWqzm: "/forms/comprehensive-intake",
   recdjXjySYuYUGkdP: "/forms/premiums-contribution-strategy",
+  "missing-premiums-manual-input": "/forms/missing-premiums",
   rechTHxZIxS3bBcqF: "/forms/basic-intake",
   reclUQ6KhVzCssuVl: "/forms/quick-start-new-benefits",
   recmB9IdRhtgckvaY: "/forms/benefits-pulse-survey",
@@ -732,12 +733,10 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
 
   const locationId = await upsertSingleton("locations", companyId, {
     primary_location: true,
-    address_1: pick(values, "address", QUICK_START_IDS.address),
     address_street: pick(values, "address", QUICK_START_IDS.address),
     city: pick(values, "city", QUICK_START_IDS.city),
     state: pick(values, "stateProvince", "state", QUICK_START_IDS.state),
     zip_code: pick(values, "zipCode", QUICK_START_IDS.zipCode),
-    headcount: pick(values, "estimatedBenefitEligibleEes", "estimatedBenefitEligibleEEs", "benefitEligibleEmployees", QUICK_START_IDS.benefitEligibleEmployees),
   });
   if (locationId) targets.locations = locationId;
 
@@ -782,7 +781,7 @@ async function applyMappedPayloads(companyId: string, mappedPayloads: Json): Pro
       targets.companies = Object.keys(patch);
     }
   }
-  const singletonTables = ["contacts", "entities", "locations", "benefits", "contribution_strategies", "medical_plans", "dental_plans", "vision_plans", "client_data"];
+  const singletonTables = ["contacts", "entities", "locations", "benefits", "contribution_strategies", "medical_plans", "dental_plans", "vision_plans"];
   for (const table of singletonTables) {
     const payload = mappedPayloads[table];
     if (!payload) continue;

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import QuickStartForm from "@/components/forms/QuickStartForm";
 import FormNotice, { ReturnToDashboardButton } from "@/page-modules/forms/components/FormNotice";
 import { useQuickStartForm } from "@/page-modules/forms/hooks/useQuickStartForm";
@@ -11,7 +12,9 @@ interface Props {
 }
 
 export default function QuickStartFormPage({ config }: Props) {
-  const quickStartForm = useQuickStartForm(config);
+  const searchParams = useSearchParams();
+  const isEditMode = searchParams.get("edit") === "true";
+  const quickStartForm = useQuickStartForm({ ...config, isEditMode });
 
   return (
     <div className={`${config.maxWidthClassName} mx-auto animate-in fade-in duration-500`}>
@@ -45,7 +48,7 @@ export default function QuickStartFormPage({ config }: Props) {
         />
       )}
 
-      {!quickStartForm.isCheckingStatus && quickStartForm.hasSubmittedStatus && (
+      {!quickStartForm.isCheckingStatus && quickStartForm.hasSubmittedStatus && !isEditMode && (
         <FormNotice
           title="Form Already Submitted"
           message="This form has already been submitted and cannot be edited."
@@ -55,11 +58,21 @@ export default function QuickStartFormPage({ config }: Props) {
         </FormNotice>
       )}
 
+      {isEditMode && quickStartForm.hasSubmittedStatus && quickStartForm.canRenderForm && (
+        <FormNotice
+          title="Editing Submitted Form"
+          message="You are editing a previously submitted form. Your changes will replace the existing submission."
+          tone="info"
+        />
+      )}
+
       {quickStartForm.canRenderForm && (
         <QuickStartForm
           onSubmit={quickStartForm.handleSubmit}
           isSubmitting={quickStartForm.isSubmitting}
           initialValues={quickStartForm.initialValues}
+          storageKey={config.progressStorageKey}
+          isEditMode={isEditMode}
         />
       )}
     </div>

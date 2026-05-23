@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { Pencil } from 'lucide-react';
 import { AssignedForm, FormStatus } from '@/types';
 
 interface Props {
@@ -62,6 +63,7 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
             'recOt6cX0t1DksDFT': '/forms/hr-tech',
             'recUnTZFK5UyfWqzm': '/forms/comprehensive-intake',
             'recdjXjySYuYUGkdP': '/forms/premiums-contribution-strategy',
+            'missing-premiums-manual-input': '/forms/missing-premiums',
             'rechTHxZIxS3bBcqF': '/forms/basic-intake',
             'reclUQ6KhVzCssuVl': '/forms/quick-start-new-benefits',
             'recmB9IdRhtgckvaY': '/forms/benefits-pulse-survey',
@@ -148,6 +150,9 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
         }
         if (formNameLower.includes('comprehensive intake')) {
             return '/forms/comprehensive-intake';
+        }
+        if (formNameLower.includes('missing premiums')) {
+            return '/forms/missing-premiums';
         }
         if (formNameLower.includes('premiums') || formNameLower.includes('contribution strategy')) {
             return '/forms/premiums-contribution-strategy';
@@ -244,8 +249,23 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
                         displayName = 'Untitled Form';
                     }
 
+                    const isEditable = (form.availableFormId === 'eBxXtLZdK4us' || formRoute.includes('/forms/quick-start')) &&
+                        (form.status === FormStatus.SUBMITTED || form.status === FormStatus.COMPLETED);
+                    const editRoute = `${formRoute.split('?')[0]}?edit=true`;
+
                     return (
-                        <div key={form.id} className="bg-white border border-neutral-200 rounded-large p-6 shadow-card flex flex-col hover:border-neutral-300 transition-colors">
+                        <div key={form.id} className="relative group bg-white border border-neutral-200 rounded-large p-6 shadow-card flex flex-col hover:border-neutral-300 transition-colors">
+                            {isEditable && (
+                                <Link
+                                    href={editRoute}
+                                    className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                                    title="Edit submission"
+                                >
+                                    <span className="flex items-center justify-center w-8 h-8 bg-white border border-neutral-200 rounded-full shadow-sm hover:bg-blue-50 hover:border-blue-300 transition-colors">
+                                        <Pencil className="w-3.5 h-3.5 text-neutral-500 hover:text-blue-600" />
+                                    </span>
+                                </Link>
+                            )}
                             <div className="flex-1">
                                 <div className="flex justify-between items-start mb-5">
                                     <div className="w-11 h-11 bg-neutral-50 rounded-medium flex items-center justify-center text-neutral-400 border border-neutral-100">
@@ -260,7 +280,14 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
                                 <h3 className="text-h3 text-neutral-900 leading-tight">{displayName || 'Untitled Form'}</h3>
                             </div>
                             <div className="mt-6">
-                                {isLink ? (
+                                {isEditable ? (
+                                    <Link href={editRoute} className="block">
+                                        <button className="w-full h-10 rounded-medium font-semibold text-label transition-all shadow-card active:scale-[0.98] bg-neutral-100 text-neutral-600 hover:bg-blue-50 hover:text-blue-700 border border-neutral-200 hover:border-blue-300 flex items-center justify-center gap-2">
+                                            <Pencil className="w-4 h-4" />
+                                            Edit Submission
+                                        </button>
+                                    </Link>
+                                ) : isLink ? (
                                     formRoute.startsWith('http://') || formRoute.startsWith('https://') ? (
                                         <a href={formRoute} target="_blank" rel="noopener noreferrer" className="block">
                                             <button 

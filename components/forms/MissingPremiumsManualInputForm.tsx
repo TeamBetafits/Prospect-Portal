@@ -177,45 +177,29 @@ export default function MissingPremiumsManualInputForm() {
     const updates = buildUpdates();
 
     try {
-      const res = await fetch("/api/tiers-and-rates", {
-        method: "PATCH",
+      const res = await fetch("/api/missing-premiums/submit", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ updates }),
+        body: JSON.stringify({
+          updates,
+          notes: notes || null,
+          supporting_documents: files.map((f) => ({ name: f.name, size: f.size, type: f.type })),
+        }),
       });
 
       const body = await res.json();
 
-      if (!res.ok && res.status !== 207) {
-        throw new Error(body?.error ?? "Failed to save premiums. Please try again.");
-      }
-
-      const failures = (body?.results ?? []).filter((r: { ok: boolean }) => !r.ok);
-      if (failures.length > 0) {
-        console.error("[MissingPremiumsManualInputForm] Partial failures:", failures);
-        throw new Error("Some premiums could not be saved. Please try again or contact support.");
+      if (!res.ok) {
+        throw new Error(body?.error ?? "Failed to submit. Please try again.");
       }
 
       setSubmittedPayload({
         form_type: "Missing Premiums Manual Input",
-        table: "tiers_and_rates",
+        submission_id: body.submissionId,
         tiers_and_rates_updates: updates,
         supporting_documents: files.map((f) => ({ name: f.name, size: f.size, type: f.type })),
         notes: notes || null,
-        api_response: body,
       });
-
-      // Notify orchestration: mark the manual input step as completed and
-      // signal a Missing Premiums rerun. Runs after data is saved; errors here
-      // are non-blocking so the user still sees the success screen.
-      try {
-        const completionRes = await fetch("/api/missing-premiums/complete", { method: "POST" });
-        if (!completionRes.ok) {
-          const completionBody = await completionRes.json().catch(() => ({}));
-          console.error("[MissingPremiumsManualInputForm] Orchestration signal failed:", completionBody?.error);
-        }
-      } catch (completionErr) {
-        console.error("[MissingPremiumsManualInputForm] Orchestration signal threw:", completionErr);
-      }
 
       setSubmitted(true);
     } catch (err: any) {
@@ -235,10 +219,10 @@ export default function MissingPremiumsManualInputForm() {
           <div className="flex items-start gap-3">
             <CheckCircle2 className="mt-1 h-6 w-6 text-green-600" />
             <div>
-              <h1 className="text-2xl font-semibold">Premium information submitted</h1>
+              <h1 className="text-2xl font-semibold">Premium information submitted for review</h1>
               <p className="mt-2 text-slate-600">
-                We received the premiums you added or corrected. Betafits will review them before
-                updating the final premium values.
+                We received the premiums you entered. A Betafits admin will review and approve
+                the values before they are applied and the calculation is re-run.
               </p>
             </div>
           </div>
