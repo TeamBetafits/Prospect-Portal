@@ -2,7 +2,7 @@
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { readSavedFormProgress, saveFormProgress } from "@/page-modules/forms/services/formProgressService";
-import { CheckCircle, ChevronDown, ChevronLeft, Upload, X, Pencil, Folder, Mic } from "lucide-react";
+import { ChevronDown, ChevronLeft, Upload, X, Pencil, Folder, Mic } from "lucide-react";
 import { DOCUMENT_TYPES } from "@/constants/documentTypes";
 import { mapQuickStartFormToSupabasePayloads, normalizeYearToDate } from "@/lib/mappings/quickStartMapping";
 
@@ -169,9 +169,7 @@ function reviewLabel(k: string): string {
   return MAP[k] ?? k.replace(/([A-Z])/g, " $1").replace(/^./, (m) => m.toUpperCase());
 }
 
-function ThankYouModal({ onClose }: { onClose: () => void }) {
-  return <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"><div className="w-full max-w-[480px] rounded-2xl bg-white p-8 text-center shadow-xl ring-1 ring-black/5"><div className="mx-auto mb-5 grid h-16 w-16 place-items-center rounded-full bg-green-100"><CheckCircle className="h-8 w-8 text-green-600" /></div><h2 className="text-2xl font-semibold text-slate-700">Thank you!</h2><p className="mt-3 text-zinc-500">Your Quick Start form has been submitted successfully. We&apos;ll review your information and reach out shortly.</p><button onClick={onClose} className="mt-6 rounded-md bg-blue-500 px-8 py-3 font-semibold text-white transition-colors hover:bg-blue-600">Done</button></div></div>;
-}
+
 
 function ReviewSection({ fields, values, onEdit }: any) {
   return <section className="border-t border-zinc-200 pt-5"><div className="mb-4 flex justify-end"><button onClick={onEdit} className="text-blue-600 hover:underline">Edit</button></div><div className="space-y-5">{fields.map((f: any) => <div key={f.label} className="grid grid-cols-[1.2fr_1fr] gap-6 text-[15px] max-md:grid-cols-1 max-md:gap-1"><div className="text-zinc-500">{f.label}</div><div className={fmt(values[f.key]) === "Unanswered" ? "italic text-zinc-300" : "text-zinc-700"}>{fmt(values[f.key])}</div></div>)}</div></section>;
@@ -229,7 +227,6 @@ export default function QuickStartForm({
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showThankYou, setShowThankYou] = useState(false);
   const isSubmitDisabled = isSubmitting || externalSubmitting;
 
   // Sync DB prefill: always apply in edit mode; otherwise only when localStorage wasn't loaded
@@ -300,7 +297,7 @@ export default function QuickStartForm({
       if (onSubmit) {
         await onSubmit(finalValues, finalPayloads);
       }
-      setShowThankYou(true);
+
     } catch (err) {
       console.error("Submission error", err);
     } finally {
@@ -309,5 +306,5 @@ export default function QuickStartForm({
   };
 
   const progressStep = page <= 2 ? 1 : page <= 4 ? 2 : page === 5 ? 3 : 4;
-  return <>{showThankYou && <ThankYouModal onClose={() => setShowThankYou(false)} />}<div className="animate-in fade-in duration-500 min-h-[80vh] text-[#1F2937]"><div className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur -mx-4 px-4 md:-mx-8 md:px-8 mb-6 rounded-t-xl"><div className="mx-auto flex h-[60px] max-w-[1440px] items-center">{page > 1 && page < 7 ? <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} className="mr-4 rounded-full p-2 text-zinc-700 transition hover:bg-zinc-200"><ChevronLeft size={24} /></button> : <div className="mr-4 h-10 w-10" />}<div className="flex-1"><ProgressHeader step={progressStep} /></div></div></div><main className="pb-12">{page === 1 ? <IntroPage onStart={() => setPage(2)} /> : null}{page === 2 ? <CompanyPage v={values} setV={setValues} next={() => setPage(3)} /> : null}{page === 3 ? <BenefitsOverviewPage v={values} setV={setValues} next={() => setPage(4)} /> : null}{page === 4 ? <BenefitPreferencesPage v={values} setV={setValues} next={() => setPage(5)} /> : null}{page === 5 ? <UploadDocumentsPage v={values} setV={setValues} next={() => setPage(6)} /> : null}{page === 6 ? <ReviewPage v={values} edit={setPage} submit={handleSubmit} isSubmitting={isSubmitDisabled} /> : null}</main></div></>;
+  return <><div className="animate-in fade-in duration-500 min-h-[80vh] text-[#1F2937]"><div className="sticky top-0 z-10 border-b border-zinc-200 bg-zinc-50/95 backdrop-blur -mx-4 px-4 md:-mx-8 md:px-8 mb-6 rounded-t-xl"><div className="mx-auto flex h-[60px] max-w-[1440px] items-center">{page > 1 && page < 7 ? <button type="button" onClick={() => setPage((p) => Math.max(1, p - 1))} className="mr-4 rounded-full p-2 text-zinc-700 transition hover:bg-zinc-200"><ChevronLeft size={24} /></button> : <div className="mr-4 h-10 w-10" />}<div className="flex-1"><ProgressHeader step={progressStep} /></div></div></div><main className="pb-12">{page === 1 ? <IntroPage onStart={() => setPage(2)} /> : null}{page === 2 ? <CompanyPage v={values} setV={setValues} next={() => setPage(3)} /> : null}{page === 3 ? <BenefitsOverviewPage v={values} setV={setValues} next={() => setPage(4)} /> : null}{page === 4 ? <BenefitPreferencesPage v={values} setV={setValues} next={() => setPage(5)} /> : null}{page === 5 ? <UploadDocumentsPage v={values} setV={setValues} next={() => setPage(6)} /> : null}{page === 6 ? <ReviewPage v={values} edit={setPage} submit={handleSubmit} isSubmitting={isSubmitDisabled} /> : null}</main></div></>;
 }

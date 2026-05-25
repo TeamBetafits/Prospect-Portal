@@ -1,6 +1,5 @@
 "use client";
 
-import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FormStatus } from "@/types";
 import { FormValues } from "@/types/form";
@@ -12,7 +11,6 @@ import { submitPortalForm, uploadQuickStartFiles } from "@/page-modules/forms/se
 import { QuickStartFormConfig, QuickStartFormState } from "@/page-modules/forms/types/formWorkflow";
 
 export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormState {
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -73,13 +71,10 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
       await submitPortalForm(config.formId, config.formName, sanitizedValues, mappedPayloads);
       clearFormProgress(config.progressStorageKey);
       setIsSuccess(true);
-      setTimeout(() => {
-        router.push("/?formSubmitted=true");
-        router.refresh();
-      }, 2000);
     } catch (error) {
       console.error("Form submission error:", error);
       setSubmitError(error instanceof Error ? error.message : "An error occurred while submitting the form. Please try again.");
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -87,7 +82,7 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
   const hasSubmittedStatus = formStatus === FormStatus.SUBMITTED || formStatus === FormStatus.COMPLETED;
 
   return {
-    canRenderForm: !isCheckingStatus && (!hasSubmittedStatus || !!config.isEditMode),
+    canRenderForm: !isCheckingStatus,
     clearSubmitError: () => setSubmitError(""),
     formStatus,
     handleSave,
