@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import QuickStartForm from "@/components/forms/QuickStartForm";
@@ -11,7 +12,7 @@ interface Props {
   config: QuickStartFormConfig;
 }
 
-export default function QuickStartFormPage({ config }: Props) {
+function QuickStartFormPageInner({ config }: Props) {
   const searchParams = useSearchParams();
   const isEditMode = searchParams.get("edit") === "true";
   const quickStartForm = useQuickStartForm({ ...config, isEditMode });
@@ -76,5 +77,13 @@ export default function QuickStartFormPage({ config }: Props) {
         />
       )}
     </div>
+  );
+}
+
+export default function QuickStartFormPage({ config }: Props) {
+  return (
+    <Suspense>
+      <QuickStartFormPageInner config={config} />
+    </Suspense>
   );
 }
