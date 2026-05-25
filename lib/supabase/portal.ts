@@ -631,6 +631,10 @@ export async function updateCompanyData(companyId: string, body: Json): Promise<
     primary_location: true,
     address_street: pick(body, "address"),
   });
+
+  await upsertSingleton("policy_or_admin_configurations", companyId, {
+    renewal_month: pick(body, "renewalMonth"),
+  });
 }
 
 async function upsertSingleton(table: string, companyId: string, patch: Json): Promise<string | null> {
@@ -922,13 +926,20 @@ export async function getBenefitPlansData(companyId: string): Promise<{
   strategies: ContributionStrategy[];
   plans: BenefitPlan[];
 }> {
-  const [benefitClass, strategiesRows, medical, dental, vision] = await Promise.all([
+  const [benefitClass, strategiesRows, medical, dental, vision, availablePlans] = await Promise.all([
     maybeSingle<any>(supabaseAdmin.from("benefit_classes").select("*").eq("company_id", companyId).limit(1)),
     list<any>(supabaseAdmin.from("contribution_strategies").select("*").eq("company_id", companyId).limit(100)),
     list<any>(supabaseAdmin.from("medical_plans").select("*").eq("company_id", companyId).limit(100)),
     list<any>(supabaseAdmin.from("dental_plans").select("*").eq("company_id", companyId).limit(100)),
     list<any>(supabaseAdmin.from("vision_plans").select("*").eq("company_id", companyId).limit(100)),
+    list<any>(supabaseAdmin.from("available_plans").select("*").eq("company_id", companyId).limit(100)),
   ]);
+  const typedPlans = [
+    ...medical.map(mapMedicalPlan),
+    ...dental.map(mapDentalPlan),
+    ...vision.map(mapVisionPlan),
+  ];
+  const fallbackPlans = typedPlans.length ? [] : await mapAvailablePlans(availablePlans);
 
   return {
     eligibility: benefitClass
@@ -947,12 +958,134 @@ export async function getBenefitPlansData(companyId: string): Promise<{
       depPercent: asString(row.dep_contribution),
       buyUpStrategy: asString(row.buyup_strategy),
     })),
-    plans: [
-      ...medical.map(mapMedicalPlan),
-      ...dental.map(mapDentalPlan),
-      ...vision.map(mapVisionPlan),
-    ],
+    plans: [...typedPlans, ...fallbackPlans],
   };
+}
+
+async function mapAvailablePlans(availablePlans: any[]): Promise<BenefitPlan[]> {
+  if (!availablePlans.length) return [];
+
+  const planIds = availablePlans.map((row) => row.id).filter(Boolean);
+  const rateRows = planIds.length
+    ? await list<any>(
+        supabaseAdmin
+          .from("tiers_and_rates")
+          .select("*")
+          .in("plan_id", planIds)
+          .limit(1000)
+      )
+    : [];
+
+  const ratesByPlanId = groupRowsByKey(rateRows, "plan_id");
+
+  return availablePlans
+    .map((row) => mapAvailablePlan(row, ratesByPlanId.get(row.id) || []))
+    .filter((plan): plan is BenefitPlan => Boolean(plan));
+}
+
+function mapAvailablePlan(row: any, rateRows: any[]): BenefitPlan | null {
+  const category = normalizeBenefitCategory(row.benefit_type || row.type || row.category);
+  if (!category) return null;
+
+  const rates = mapTiersAndRates(rateRows);
+
+  return {
+    id: row.id,
+    name: row.plan_name || row.name || `${category} Plan`,
+    carrier: row.carrier || row.carrier_name || "",
+    score: asNumber(row.score || row.plan_score),
+    category,
+    type: row.plan_type || row.network_type || row.type || category,
+    deductible: row.deductible || row.deductible_individual || undefined,
+    deductibleFamily: row.deductible_family || undefined,
+    oopm: row.out_of_pocket_max || row.oopm || row.oopm_individual || undefined,
+    oopmFamily: row.oopm_family || row.out_of_pocket_max_family || undefined,
+    coinsurance: row.coinsurance || undefined,
+    copay: row.office_visit || row.copay || undefined,
+    rx: row.rx_combined || row.rx || undefined,
+    valueScore: row.value_score?.toString(),
+    annualMax: row.annual_max || undefined,
+    preventive: row.preventive?.toString(),
+    basic: row.basic?.toString(),
+    major: row.major?.toString(),
+    oonReimbursement: row.oon || row.oon_reimbursement || undefined,
+    examCopay: row.exam_copay || undefined,
+    materialsCopay: row.materials_copay || undefined,
+    frameAllowance: row.frame_allowance || undefined,
+    materialsFrequency: row.materials_frequency || row.lens_frequency || undefined,
+    frameFrequency: row.frame_frequency || undefined,
+    rates,
+    monthlyPremium: rates?.reduce((sum, item) => sum + item.premium, 0) || 0,
+    monthlyEmployerContribution: rates?.reduce((sum, item) => sum + item.employerContribution, 0) || 0,
+    monthlyEmployeeContribution: rates?.reduce((sum, item) => sum + item.employeeContribution, 0) || 0,
+  };
+}
+
+function normalizeBenefitCategory(value: unknown): BenefitPlan["category"] | null {
+  const text = asString(value).toLowerCase();
+  if (text.includes("medical") || text.includes("health")) return "Medical";
+  if (text.includes("dental")) return "Dental";
+  if (text.includes("vision")) return "Vision";
+  return null;
+}
+
+function groupRowsByKey(rows: any[], key: string): Map<string, any[]> {
+  const grouped = new Map<string, any[]>();
+  for (const row of rows) {
+    const value = row[key];
+    if (!value) continue;
+    grouped.set(value, [...(grouped.get(value) || []), row]);
+  }
+  return grouped;
+}
+
+function mapTiersAndRates(rows: any[]): BenefitPlan["rates"] {
+  return rows.map(mapTierAndRate).filter((item) => item.premium || item.employerContribution || item.employeeContribution);
+}
+
+function mapTierAndRate(row: any) {
+  const tierKey = normalizeTierKey(row.tier_key || row.tier_label);
+  const premium = pickTierAmount(row, tierKey, "premium");
+  const userPremium = pickTierAmount(row, tierKey, "premium", true);
+  const employerContribution = asNumber(row.er_contribution || pickTierAmount(row, tierKey, "contribution"));
+  const premiumAmount = userPremium || premium;
+
+  return {
+    tierKey,
+    tierLabel: tierLabelForKey(tierKey),
+    premium: premiumAmount,
+    employerContribution,
+    employeeContribution: Math.max(0, premiumAmount - employerContribution),
+  };
+}
+
+function normalizeTierKey(value: unknown): string {
+  const text = asString(value).toLowerCase();
+  if (text.includes("spouse") || text === "es") return "es";
+  if (text.includes("child") || text === "ec") return "ec";
+  if (text.includes("family") || text === "ef") return "ef";
+  return "ee";
+}
+
+function tierLabelForKey(tierKey: string): string {
+  if (tierKey === "es") return "Employee + Spouse";
+  if (tierKey === "ec") return "Employee + Child";
+  if (tierKey === "ef") return "Family";
+  return "Employee";
+}
+
+function pickTierAmount(row: any, tierKey: string, prefix: "premium" | "contribution", user = false): number {
+  const suffix = user ? "_user" : "";
+  const keys = [
+    `${prefix}_${tierKey}${suffix}`,
+    `${prefix}_${tierKey.toUpperCase()}${suffix}`,
+    prefix,
+  ];
+  for (const key of keys) {
+    const value = asNumber(row[key]);
+    if (value) return value;
+  }
+  return 0;
 }
 
 function mapMedicalPlan(row: any): BenefitPlan {
