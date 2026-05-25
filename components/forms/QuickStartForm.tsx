@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
+import { readSavedFormProgress, saveFormProgress } from "@/page-modules/forms/services/formProgressService";
 import { CheckCircle, ChevronDown, ChevronLeft, Upload, X, Pencil, Folder, Mic } from "lucide-react";
 import { DOCUMENT_TYPES } from "@/constants/documentTypes";
 import { mapQuickStartFormToSupabasePayloads, normalizeYearToDate } from "@/lib/mappings/quickStartMapping";
@@ -201,24 +202,52 @@ export default function QuickStartForm({
   onSubmit,
   companyId = "00000000-0000-0000-0000-000000000000",
   isSubmitting: externalSubmitting = false,
+  storageKey,
+  isEditMode = false,
 }: {
   initialValues?: any;
   onSubmit?: (values: any, mappedPayloads: any) => Promise<void>;
   companyId?: string;
   isSubmitting?: boolean;
+  storageKey?: string;
+  isEditMode?: boolean;
 }) {
   const [page, setPage] = useState(1);
-  const [values, setValues] = useState<any>({ ...defaultInitialValues, ...initialValues });
+
+  // Track whether we loaded initial state from localStorage (so we can skip the DB-prefill sync)
+  const hasLocalStorageData = useRef(false);
+
+  const [values, setValues] = useState<any>(() => {
+    if (!isEditMode && storageKey && typeof window !== "undefined") {
+      const saved = readSavedFormProgress(storageKey);
+      if (saved) {
+        hasLocalStorageData.current = true;
+        return { ...defaultInitialValues, ...saved };
+      }
+    }
+    return { ...defaultInitialValues, ...initialValues };
+  });
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showThankYou, setShowThankYou] = useState(false);
   const isSubmitDisabled = isSubmitting || externalSubmitting;
 
-  // Sync initialValues if they come in late (e.g. from an API call / database prefill)
+  // Sync DB prefill: always apply in edit mode; otherwise only when localStorage wasn't loaded
   useEffect(() => {
-    if (initialValues && Object.keys(initialValues).length > 0) {
+    if (initialValues && Object.keys(initialValues).length > 0 && (isEditMode || !hasLocalStorageData.current)) {
       setValues((prev: any) => ({ ...prev, ...initialValues }));
     }
-  }, [initialValues]);
+  }, [initialValues, isEditMode]);
+
+  // Auto-save to localStorage on every values change (disabled in edit mode)
+  useEffect(() => {
+    if (!storageKey || isEditMode) return;
+    const serializableValues = {
+      ...values,
+      uploadedDocuments: (values.uploadedDocuments ?? []).map(({ file: _file, ...rest }: any) => rest),
+    };
+    saveFormProgress(storageKey, serializableValues);
+  }, [values, storageKey]);
 
   const mappedPayloads = useMemo(
     () =>

@@ -28,6 +28,7 @@ const FORM_ROUTE_BY_TEMPLATE_ID: Record<string, string> = {
   recOt6cX0t1DksDFT: "/forms/hr-tech",
   recUnTZFK5UyfWqzm: "/forms/comprehensive-intake",
   recdjXjySYuYUGkdP: "/forms/premiums-contribution-strategy",
+  "missing-premiums-manual-input": "/forms/missing-premiums",
   rechTHxZIxS3bBcqF: "/forms/basic-intake",
   reclUQ6KhVzCssuVl: "/forms/quick-start-new-benefits",
   recmB9IdRhtgckvaY: "/forms/benefits-pulse-survey",
@@ -69,6 +70,7 @@ export function getAssignedFormRoute(form: AssignedForm): string {
   if (formName.includes("appoint betafits")) return "/forms/appoint-betafits";
   if (formName.includes("hr tech")) return "/forms/hr-tech";
   if (formName.includes("comprehensive intake")) return "/forms/comprehensive-intake";
+  if (formName.includes("missing premiums")) return "/forms/missing-premiums";
   if (formName.includes("premiums") || formName.includes("contribution strategy")) return "/forms/premiums-contribution-strategy";
   if (formName.includes("basic intake")) return "/forms/basic-intake";
   if (formName.includes("benefits pulse survey")) return "/forms/benefits-pulse-survey";

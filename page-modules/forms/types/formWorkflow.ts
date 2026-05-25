@@ -40,6 +40,7 @@ export interface QuickStartFormConfig {
   subtitle: string;
   maxWidthClassName: string;
   checkSubmissionStatus: boolean;
+  isEditMode?: boolean;
 }
 
 export interface QuickStartFormState {

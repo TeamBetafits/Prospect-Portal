@@ -87,7 +87,7 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
   const hasSubmittedStatus = formStatus === FormStatus.SUBMITTED || formStatus === FormStatus.COMPLETED;
 
   return {
-    canRenderForm: !isCheckingStatus && !hasSubmittedStatus,
+    canRenderForm: !isCheckingStatus && (!hasSubmittedStatus || !!config.isEditMode),
     clearSubmitError: () => setSubmitError(""),
     formStatus,
     handleSave,
