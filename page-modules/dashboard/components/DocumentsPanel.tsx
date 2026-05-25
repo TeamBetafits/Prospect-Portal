@@ -42,6 +42,7 @@ function formatDocumentDate(date: string) {
     month: "numeric",
     day: "numeric",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
