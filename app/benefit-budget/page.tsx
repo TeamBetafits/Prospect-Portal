@@ -1,11 +1,7 @@
 import React from 'react';
 import { unstable_noStore } from 'next/cache';
 import DashboardHeader from '@/components/DashboardHeader';
-import BudgetSummaryKPIs from '@/components/BudgetSummaryKPIs';
-import DemographicInsights from '@/components/DemographicInsights';
-import FinancialBenchmarks from '@/components/FinancialBenchmarks';
-import BudgetDistribution from '@/components/BudgetDistribution';
-import BudgetBreakdownTable from '@/components/BudgetBreakdownTable';
+import BenefitBudgetTabs from '@/components/BenefitBudgetTabs';
 import { getCompanyId } from '@/lib/auth/getCompanyId';
 import { getBenefitsAnalysisData } from '@/lib/supabase/portal';
 import { BudgetBreakdown, DemographicInsights as DemographicInsightsType, FinancialKPIs } from '@/types';
@@ -53,11 +49,11 @@ export default async function BenefitBudgetPage() {
         subtitle="Provide financial overview and cost breakdown of benefits."
       />
 
-      <BudgetBreakdownTable breakdown={breakdown} />
-      <BudgetSummaryKPIs kpis={kpis} />
-      <DemographicInsights demographics={demographics} />
-      <FinancialBenchmarks kpis={kpis} />
-      <BudgetDistribution breakdown={breakdown} />
+      <BenefitBudgetTabs
+        breakdown={breakdown}
+        kpis={kpis}
+        demographics={demographics}
+      />
     </div>
   );
 }
