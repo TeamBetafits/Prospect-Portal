@@ -15,10 +15,11 @@ export function useAssignedForms(forms: AssignedForm[]) {
   const currentForms = forms.slice(startIndex, endIndex).map((form) => {
     const route = getAssignedFormRoute(form);
     const isSubmitted = form.status === FormStatus.SUBMITTED || form.status === FormStatus.COMPLETED;
+    const editRoute = isSubmitted && route && route !== "#" ? `${route}?edit=true` : route;
     return {
       ...form,
       displayName: cleanAssignedFormName(form),
-      route,
+      route: editRoute,
       isLink: route !== "#" && route !== `/forms/${form.id}` && !form.description.startsWith("?id="),
       ctaLabel:
         form.status === FormStatus.NOT_STARTED
