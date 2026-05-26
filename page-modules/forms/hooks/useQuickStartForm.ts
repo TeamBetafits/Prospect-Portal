@@ -1,16 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FormStatus } from "@/types";
 import { FormValues } from "@/types/form";
 import { normalizeYearToDate } from "@/lib/mappings/quickStartMapping";
 import { clearFormProgress, saveFormProgress } from "@/page-modules/forms/services/formProgressService";
-import { getAssignedFormStatus, getQuickStartInitialValues } from "@/page-modules/forms/services/formStatusService";
+import { getAssignedFormStatus, getLastSubmissionAnswers, getQuickStartInitialValues } from "@/page-modules/forms/services/formStatusService";
 import { mapQuickStartGroupDataToFormValues } from "@/page-modules/forms/services/quickStartPrefill";
 import { submitPortalForm, uploadQuickStartFiles } from "@/page-modules/forms/services/formSubmissionService";
 import { QuickStartFormConfig, QuickStartFormState } from "@/page-modules/forms/types/formWorkflow";
 
 export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormState {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -43,16 +45,40 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
   useEffect(() => {
     let isMounted = true;
 
-    getQuickStartInitialValues(config.progressStorageKey, mapQuickStartGroupDataToFormValues)
-      .then((values) => {
-        if (isMounted) setInitialValues(values);
-      })
-      .catch(() => {});
+    async function loadInitialValues() {
+      // Prefer last submission answers (exact form keys) over group-data mapping
+      try {
+        const submissionAnswers = await getLastSubmissionAnswers(config.formId);
+        if (submissionAnswers && Object.keys(submissionAnswers).length > 0) {
+          if (isMounted) setInitialValues(submissionAnswers as FormValues);
+          return;
+        }
+      } catch (error) {
+        console.error("Error loading last submission answers:", error);
+      }
 
+      // Fall back to group-data prefill for first-time visitors
+      try {
+        const values = await getQuickStartInitialValues(config.progressStorageKey, mapQuickStartGroupDataToFormValues);
+        if (isMounted) setInitialValues(values);
+      } catch {}
+    }
+
+    loadInitialValues();
     return () => {
       isMounted = false;
     };
-  }, [config.progressStorageKey]);
+  }, [config.progressStorageKey, config.formId]);
+
+  // Redirect to dashboard after successful submission
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        router.push("/");
+      }, 1500); // Wait 1.5s for toast to be visible before redirecting
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess, router]);
 
   const handleSave = async (values: FormValues) => {
     saveFormProgress(config.progressStorageKey, values);

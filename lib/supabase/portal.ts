@@ -295,29 +295,79 @@ function mapDocumentStatus(status: unknown): DocumentStatus {
 }
 
 export async function listAssignedForms(companyId: string): Promise<AssignedForm[]> {
-  const rows = await list<any>(
-    supabaseAdmin
-      .from("intake_assigned_forms")
-      .select("*, intake_available_forms(*)")
-      .eq("company_id", companyId)
-      .or("assigned.is.null,assigned.eq.true")
-      .order("created_at", { ascending: true })
-      .limit(100)
-  );
+  const [rows, submissionRows] = await Promise.all([
+    list<any>(
+      supabaseAdmin
+        .from("intake_assigned_forms")
+        .select("*, intake_available_forms(*)")
+        .eq("company_id", companyId)
+        .or("assigned.is.null,assigned.eq.true")
+        .order("created_at", { ascending: true })
+        .limit(100)
+    ),
+    // Cross-reference form_submissions so status is accurate even when the
+    // intake_assigned_forms.submitted flag was never written (e.g. formId mismatch)
+    list<any>(
+      supabaseAdmin
+        .from("form_submissions")
+        .select("form_id, form_name")
+        .eq("company_id", companyId)
+    ),
+  ]);
+
+  // Build a set of group keys (e.g. "quick-start") that have at least one submission
+  const submittedGroupKeys = new Set<string>();
+  for (const sub of submissionRows) {
+    const key = computeFormGroupKey(String(sub.form_id || ""), String(sub.form_name || ""));
+    if (key) submittedGroupKeys.add(key);
+  }
 
   const forms = rows.map((row) => {
     const available = row.intake_available_forms || {};
     const templateId = available.airtable_id || row.airtable_id || row.available_form_id;
+    const rowName = row.name || available.display_name || "Assigned Form";
+    let status = mapFormStatus(row.status, row.submitted);
+
+    // Upgrade NOT_STARTED → SUBMITTED if form_submissions has a record for this form group
+    if (status === FormStatus.NOT_STARTED) {
+      const groupKey = computeFormGroupKey(templateId || row.id, rowName);
+      if (groupKey && submittedGroupKeys.has(groupKey)) {
+        status = FormStatus.SUBMITTED;
+      }
+    }
+
     return {
       id: row.id,
-      name: row.name || available.display_name || "Assigned Form",
-      status: mapFormStatus(row.status, row.submitted),
+      name: rowName,
+      status,
       description: available.forms_url || (templateId ? FORM_ROUTE_BY_TEMPLATE_ID[templateId] : "") || "",
       availableFormId: templateId || row.available_form_id || undefined,
     };
   });
 
   return dedupeAssignedForms(forms);
+}
+
+/**
+ * Returns a stable group key for a form so that submissions and assigned forms
+ * for the same logical form can be matched even when their IDs differ.
+ */
+function computeFormGroupKey(formId: string, formName: string): string {
+  const name = formName.trim().toLowerCase();
+  const route = FORM_ROUTE_BY_TEMPLATE_ID[formId] || "";
+
+  if (
+    formId === CANONICAL_QUICK_START_TEMPLATE_ID ||
+    PORTAL_HIDDEN_AVAILABLE_FORM_IDS.has(formId) ||
+    name.includes("quick start") ||
+    name.includes("quickstart") ||
+    route.includes("quick-start")
+  ) {
+    return "quick-start";
+  }
+
+  // For all other forms use the formId itself as the key
+  return formId;
 }
 
 function dedupeAssignedForms(forms: AssignedForm[]): AssignedForm[] {
@@ -659,6 +709,22 @@ async function upsertSingleton(table: string, companyId: string, patch: Json): P
     .single();
   if (error) throw error;
   return data.id;
+}
+
+export async function getLastFormSubmissionAnswers(
+  companyId: string,
+  formIds: string[]
+): Promise<Record<string, unknown> | null> {
+  const row = await maybeSingle<any>(
+    supabaseAdmin
+      .from("form_submissions")
+      .select("answers")
+      .eq("company_id", companyId)
+      .in("form_id", formIds)
+      .order("created_at", { ascending: false })
+      .limit(1)
+  );
+  return (row?.answers as Record<string, unknown>) || null;
 }
 
 export async function submitPortalForm(input: {
