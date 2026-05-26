@@ -711,6 +711,22 @@ async function upsertSingleton(table: string, companyId: string, patch: Json): P
   return data.id;
 }
 
+export async function getLastFormSubmissionAnswers(
+  companyId: string,
+  formIds: string[]
+): Promise<Record<string, unknown> | null> {
+  const row = await maybeSingle<any>(
+    supabaseAdmin
+      .from("form_submissions")
+      .select("answers")
+      .eq("company_id", companyId)
+      .in("form_id", formIds)
+      .order("created_at", { ascending: false })
+      .limit(1)
+  );
+  return (row?.answers as Record<string, unknown>) || null;
+}
+
 export async function submitPortalForm(input: {
   companyId: string;
   userId: string | null;

@@ -1,5 +1,16 @@
 import { FormStatus } from "@/types";
 
+export async function getLastSubmissionAnswers(formId: string): Promise<Record<string, unknown> | null> {
+  try {
+    const response = await fetch(`/api/forms/last-submission?formId=${encodeURIComponent(formId)}`);
+    if (!response.ok) return null;
+    const data = await response.json();
+    return data.answers ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getAssignedFormStatus(formId: string): Promise<FormStatus | null> {
   const response = await fetch("/api/forms/assigned");
   if (!response.ok) return null;
