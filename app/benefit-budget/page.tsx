@@ -53,11 +53,11 @@ export default async function BenefitBudgetPage() {
         subtitle="Provide financial overview and cost breakdown of benefits."
       />
 
+      <BudgetBreakdownTable breakdown={breakdown} />
       <BudgetSummaryKPIs kpis={kpis} />
       <DemographicInsights demographics={demographics} />
       <FinancialBenchmarks kpis={kpis} />
       <BudgetDistribution breakdown={breakdown} />
-      <BudgetBreakdownTable breakdown={breakdown} />
     </div>
   );
 }

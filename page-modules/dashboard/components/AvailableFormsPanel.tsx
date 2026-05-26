@@ -40,8 +40,8 @@ export default function AvailableFormsPanel({ forms }: Props) {
     <>
       <section>
         <div className="mb-6">
-          <h2 className="text-neutral-900 tracking-tight">Available Forms</h2>
-          <p className="text-[13px] text-neutral-500 mt-0.5">Complete these forms to progress through your enrollment.</p>
+          <h2 className="text-neutral-900 tracking-tight">Additional Requests</h2>
+          <p className="text-[13px] text-neutral-500 mt-0.5">Optional items that may be useful for your current review.</p>
         </div>
 
         {availableForms.error && (
@@ -83,8 +83,7 @@ export default function AvailableFormsPanel({ forms }: Props) {
           <div className="bg-white rounded-md shadow-modal w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-neutral-200">
             <div className="p-8 border-b border-neutral-100 flex justify-between items-center">
               <div>
-                <h2 className="text-neutral-900 tracking-tight">All Intake Modules</h2>
-                <p className="text-[13px] text-neutral-500 font-normal">Choose a module to complete your profile.</p>
+                <h2 className="text-neutral-900 tracking-tight">Additional Requests</h2>
               </div>
               <button onClick={availableForms.closeModal} className="p-2 hover:bg-neutral-100 rounded-md text-neutral-400 transition-colors" aria-label="Close available forms">
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>

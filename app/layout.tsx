@@ -4,7 +4,7 @@ import ConditionalLayout from '@/components/ConditionalLayout';
 import './globals.css';
 
 export const metadata = {
-    title: 'Betafits Prospect Portal',
+    title: 'Betafits Portal',
     description: 'Manage your intake workflow and document submissions',
     icons: {
         icon: '/favicon.ico',

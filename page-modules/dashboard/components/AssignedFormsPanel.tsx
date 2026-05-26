@@ -31,8 +31,8 @@ export default function AssignedFormsPanel({ forms }: Props) {
   return (
     <section>
       <div className="mb-6">
-        <h2 className="text-neutral-900 tracking-tight">Assigned Forms</h2>
-        <p className="text-[13px] text-neutral-500 mt-0.5">Core tasks required for your enrollment profile.</p>
+        <h2 className="text-neutral-900 tracking-tight">Assigned Tasks</h2>
+        <p className="text-[13px] text-neutral-500 mt-0.5">Items requested by the Betafits team.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -64,7 +64,7 @@ export default function AssignedFormsPanel({ forms }: Props) {
 
         {!assignedForms.hasForms && (
           <div className="col-span-full bg-neutral-50 border border-dashed border-neutral-300 rounded-md p-6 text-center">
-            <p className="text-neutral-500 font-medium text-body">No forms currently assigned.</p>
+            <p className="text-neutral-500 font-medium text-body">No tasks currently assigned.</p>
           </div>
         )}
       </div>

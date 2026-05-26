@@ -330,6 +330,7 @@ const PlanCard: React.FC<{
 };
 
 const BenefitPlans: React.FC<Props> = ({ eligibility, strategies, plans }) => {
+  const [activeHubTab, setActiveHubTab] = useState<'Benefits' | 'Eligibility'>('Benefits');
   const [activeTab, setActiveTab] = useState<'Medical' | 'Dental' | 'Vision'>('Medical');
   const [selectedPlan, setSelectedPlan] = useState<BenefitPlan | null>(null);
   const [selectedRatesPlan, setSelectedRatesPlan] = useState<BenefitPlan | null>(null);
@@ -338,10 +339,7 @@ const BenefitPlans: React.FC<Props> = ({ eligibility, strategies, plans }) => {
     return (
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
         <div className="flex flex-col">
-          <h1 className="text-neutral-900 tracking-tight mb-2">Benefit Plans</h1>
-          <p className="text-neutral-500 font-medium max-w-2xl leading-relaxed">
-            Review your organization's benefit ecosystem, from coverage rules to employer contribution strategies.
-          </p>
+          <h1 className="text-neutral-900 tracking-tight mb-2">Benefits</h1>
         </div>
         <EmptyState />
       </div>
@@ -354,21 +352,33 @@ const BenefitPlans: React.FC<Props> = ({ eligibility, strategies, plans }) => {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
       {/* Header Section */}
       <div className="flex flex-col">
-        <h1 className="text-neutral-900 tracking-tight mb-2">Benefit Plans</h1>
-        <p className="text-neutral-500 font-medium max-w-2xl leading-relaxed">
-          Review your organization's benefit ecosystem, from coverage rules to employer contribution strategies.
-        </p>
+        <h1 className="text-neutral-900 tracking-tight mb-2">Benefits</h1>
       </div>
 
-      {/* Top Insights Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
-        <div className="lg:col-span-4 bg-white border border-neutral-200 rounded-md shadow-card p-8 flex flex-col overflow-hidden">
+      <div className="flex gap-8 border-b border-neutral-200">
+        {(['Benefits', 'Eligibility'] as const).map(tab => (
+          <button
+            key={tab}
+            onClick={() => setActiveHubTab(tab)}
+            className={`pb-4 text-[15px] font-bold tracking-tight transition-all relative ${
+              activeHubTab === tab ? 'text-primary-600' : 'text-neutral-400 hover:text-neutral-600'
+            }`}
+          >
+            {tab}
+            {activeHubTab === tab && (
+              <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary-500 rounded-full"></div>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {activeHubTab === 'Eligibility' ? (
+        <div className="bg-white border border-neutral-200 rounded-md shadow-card p-8 flex flex-col overflow-hidden">
           <div className="mb-8">
-            <h2 className="text-lg font-bold text-neutral-900 tracking-tight">Benefit Eligibility</h2>
-            <p className="text-[13px] text-neutral-500 font-medium mt-1">Defines who qualifies for benefits and when coverage begins.</p>
+            <h2 className="text-lg font-bold text-neutral-900 tracking-tight">Eligibility</h2>
           </div>
           
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
             {[
               { label: 'Benefit Class', value: eligibility?.className || 'All Full-Time Employees' },
               { label: 'Waiting Period', value: eligibility?.waitingPeriod || 'Not mapped yet' },
@@ -382,12 +392,12 @@ const BenefitPlans: React.FC<Props> = ({ eligibility, strategies, plans }) => {
             ))}
           </div>
         </div>
-
-        <div className="lg:col-span-8 bg-white border border-neutral-200 rounded-md shadow-card overflow-hidden flex flex-col">
+      ) : (
+        <>
+        <div className="bg-white border border-neutral-200 rounded-md shadow-card overflow-hidden flex flex-col">
           <div className="px-8 py-6 border-b border-neutral-100 flex justify-between items-center bg-neutral-50/50">
             <div>
               <h2 className="text-lg font-bold text-neutral-900 tracking-tight">Contribution Strategy</h2>
-              <p className="text-[13px] text-neutral-500 font-medium mt-1">Displays how employer contributions are structured by strategy type, amount, and plan level across benefits.</p>
             </div>
           </div>
           
@@ -438,11 +448,7 @@ const BenefitPlans: React.FC<Props> = ({ eligibility, strategies, plans }) => {
               </tbody>
             </table>
           </div>
-          <div className="p-4 bg-neutral-50/50 border-t border-neutral-100 text-center">
-            <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Strategy data is based on most recent enrollment cycle</span>
-          </div>
         </div>
-      </div>
 
       {/* Plans Section */}
       <div className="pt-6">
@@ -484,6 +490,8 @@ const BenefitPlans: React.FC<Props> = ({ eligibility, strategies, plans }) => {
           )}
         </div>
       </div>
+        </>
+      )}
 
       {/* Detail Modals */}
       {selectedPlan && (

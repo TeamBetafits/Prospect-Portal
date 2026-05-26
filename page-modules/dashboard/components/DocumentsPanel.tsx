@@ -1,30 +1,10 @@
 "use client";
 
-import { DocumentArtifact, DocumentStatus } from "@/types";
+import { DocumentArtifact } from "@/types";
 import { useDocumentsSection } from "@/page-modules/dashboard/hooks/useDocumentsSection";
 
 interface Props {
   documents: DocumentArtifact[];
-}
-
-function getStatusStyle(status: DocumentStatus) {
-  switch (status) {
-    case DocumentStatus.APPROVED:
-      return "bg-success-bg text-success-500 border-success-500/20";
-    case DocumentStatus.UNDER_REVIEW:
-      return "bg-info-bg text-info-500 border-info-500/20";
-    case DocumentStatus.REJECTED:
-      return "bg-error-bg text-error-500 border-error-500/20";
-    case DocumentStatus.NOT_REVIEWED:
-    default:
-      return "bg-neutral-100 text-neutral-600 border-neutral-200";
-  }
-}
-
-function getStatusLabel(status: DocumentStatus) {
-  if (status === DocumentStatus.APPROVED) return "Reviewed";
-  if (status === DocumentStatus.UNDER_REVIEW) return "In Review";
-  return status;
 }
 
 function getDocumentType(doc: DocumentArtifact) {
@@ -54,12 +34,7 @@ function DocumentCard({ doc, onOpen }: { doc: DocumentArtifact; onOpen: (doc: Do
       <div className="flex justify-between items-start gap-4 w-full">
         <div className="flex-1 min-w-0">
           <h3 className="text-[15px] font-bold text-neutral-900 tracking-tight leading-tight break-words">{doc.name}</h3>
-          <p className="text-[12px] text-neutral-500 font-medium mt-1 truncate">{subtitleParts.join(" · ")}</p>
-        </div>
-        <div className="flex-shrink-0">
-          <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold border whitespace-nowrap ${getStatusStyle(doc.status)}`}>
-            {getStatusLabel(doc.status)}
-          </span>
+          <p className="text-[12px] text-neutral-500 font-medium mt-1 truncate">{subtitleParts.join(" - ")}</p>
         </div>
       </div>
 

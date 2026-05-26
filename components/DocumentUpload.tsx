@@ -59,18 +59,11 @@ function getFileTitle(fileName: string) {
     return fileName.replace(/\.[^/.]+$/, '') || fileName;
 }
 
-function formatFileSize(bytes: number) {
-    if (!bytes) return '0 KB';
-    const units = ['Bytes', 'KB', 'MB', 'GB'];
-    const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    return `${(bytes / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
-}
-
 function inferDocumentType(fileName: string) {
     const value = fileName.toLowerCase();
     if (value.includes('benefit') && value.includes('guide')) return 'Benefit Guide';
-    if (value.includes('sbc')) return 'Medical SBC';
-    if (value.includes('summary') || value.includes('plan')) return 'Plan Summary';
+    if (value.includes('sbc')) return 'SBC / Plan Summary';
+    if (value.includes('summary') || value.includes('plan')) return 'SBC / Plan Summary';
     if (value.includes('census')) return 'Employee Census';
     if (value.includes('invoice')) return 'Invoice';
     if (value.includes('renewal')) return 'Renewal Document';
@@ -318,16 +311,12 @@ export default function DocumentUpload({ onUploadComplete, buttonLabel = 'Upload
 
                                                             <div className="grid min-w-0 flex-1 grid-cols-1 gap-4 lg:grid-cols-[1fr_240px]">
                                                                 <div>
-                                                                    <label className="mb-2 block text-[12px] font-bold uppercase tracking-wider text-neutral-400">
-                                                                        Document Title
-                                                                    </label>
-                                                                    <input
-                                                                        value={item.title}
-                                                                        onChange={(event) => updateItem(item.id, { title: event.target.value })}
-                                                                        disabled={isUploading || item.status === 'Uploaded'}
-                                                                        placeholder="Enter document title"
-                                                                        className="h-11 w-full rounded-md border border-neutral-200 bg-white px-4 text-[15px] text-neutral-900 outline-none transition focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20 disabled:bg-neutral-50 disabled:text-neutral-500"
-                                                                    />
+                                                                    <div className="mb-2 text-[12px] font-bold uppercase tracking-wider text-neutral-400">
+                                                                        File
+                                                                    </div>
+                                                                    <div className="min-h-11 rounded-md border border-neutral-200 bg-neutral-50 px-4 py-3 text-[15px] font-semibold text-neutral-900">
+                                                                        {item.file.name}
+                                                                    </div>
                                                                 </div>
 
                                                                 <div>
@@ -364,11 +353,7 @@ export default function DocumentUpload({ onUploadComplete, buttonLabel = 'Upload
                                                             )}
                                                         </div>
 
-                                                        <div className="mt-4 flex flex-wrap items-center gap-3 pl-0 text-[12px] font-medium text-neutral-400 sm:pl-16">
-                                                            <span className="max-w-[260px] truncate">{item.file.name}</span>
-                                                            <span>•</span>
-                                                            <span>{formatFileSize(item.file.size)}</span>
-                                                            <span>•</span>
+                                                        <div className={`${item.status === 'Ready' ? 'hidden ' : ''}mt-4 flex flex-wrap items-center gap-3 pl-0 text-[12px] font-medium text-neutral-400 sm:pl-16`}>
                                                             <span className={`flex items-center gap-1 font-bold uppercase tracking-wider ${getStatusClass(item.status)}`}>
                                                                 {item.status === 'Uploading' && <Loader2 className="h-3 w-3 animate-spin" />}
                                                                 {item.status === 'Uploaded' && <CheckCircle2 className="h-3 w-3" />}

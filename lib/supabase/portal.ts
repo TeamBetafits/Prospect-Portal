@@ -77,6 +77,14 @@ const PORTAL_HIDDEN_AVAILABLE_FORM_IDS = new Set([
 
 const CANONICAL_QUICK_START_TEMPLATE_ID = "eBxXtLZdK4us";
 
+const DEFAULT_PROGRESS_STEPS: ProgressStep[] = [
+  { id: "quick-start", name: "Quick Start", status: ProgressStatus.MISSING, category: "Intake" },
+  { id: "current-benefits", name: "Current Benefits", status: ProgressStatus.MISSING, category: "Benefits" },
+  { id: "benefit-documents", name: "Benefit Documents", status: ProgressStatus.MISSING, category: "Documents" },
+  { id: "vendor-feedback", name: "Vendor Feedback", status: ProgressStatus.MISSING, category: "Feedback" },
+  { id: "employee-feedback", name: "Employee Feedback", status: ProgressStatus.MISSING, category: "Feedback" },
+];
+
 const QUICK_START_IDS: Record<string, string> = {
   firstName: "qYvbJrrJqLQjqQnVip6c3N",
   lastName: "3khn37NbHQYb7CN6NPgrx2",
@@ -549,7 +557,7 @@ export async function listProgressSteps(companyId: string): Promise<ProgressStep
       .limit(100)
   );
 
-  return rows.map((row) => ({
+  const rowSteps = rows.map((row) => ({
     id: row.id,
     name: row.name || "Progress Step",
     status: mapProgressStatus(row.status),
@@ -557,6 +565,19 @@ export async function listProgressSteps(companyId: string): Promise<ProgressStep
     notes: row.notes || undefined,
     lastUpdated: row.status_last_updated ? asDate(row.status_last_updated) : undefined,
   }));
+
+  return mergeProgressSteps(rowSteps);
+}
+
+function mergeProgressSteps(rowSteps: ProgressStep[]): ProgressStep[] {
+  const stepsByName = new Map(rowSteps.map((step) => [step.name.trim().toLowerCase(), step]));
+
+  return DEFAULT_PROGRESS_STEPS.map((defaultStep) => {
+    const existing = stepsByName.get(defaultStep.name.trim().toLowerCase());
+    return existing || defaultStep;
+  }).concat(
+    rowSteps.filter((step) => !DEFAULT_PROGRESS_STEPS.some((defaultStep) => defaultStep.name.trim().toLowerCase() === step.name.trim().toLowerCase()))
+  );
 }
 
 function mapProgressStatus(status: unknown): ProgressStatus {

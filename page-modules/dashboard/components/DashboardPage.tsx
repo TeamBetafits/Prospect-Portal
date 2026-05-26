@@ -12,10 +12,12 @@ interface Props {
 export default function DashboardPage({ data }: Props) {
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <header>
-        <h1 className="text-neutral-900 tracking-tight">Prospect Portal</h1>
-        <p className="text-[15px] text-neutral-500 font-medium mt-1">Manage your intake workflow and document submissions with ease.</p>
-      </header>
+      <section className="w-full">
+        <div className="mb-6">
+          <h1 className="text-neutral-900 tracking-tight">Next Steps</h1>
+        </div>
+        <ProgressSteps steps={data.progressSteps} />
+      </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         <div className="lg:col-span-8">
@@ -25,7 +27,7 @@ export default function DashboardPage({ data }: Props) {
           <div className="mb-6 flex items-start justify-between gap-4">
             <div>
               <h2 className="text-neutral-900 tracking-tight">Your Documents</h2>
-              <p className="text-[13px] text-neutral-500 mt-0.5">Recently uploaded files and artifacts.</p>
+              <p className="text-[13px] text-neutral-500 mt-0.5">Uploaded files for review.</p>
             </div>
             <DocumentUpload
               buttonLabel="Upload Document"
@@ -35,14 +37,6 @@ export default function DashboardPage({ data }: Props) {
           <DocumentsPanel documents={data.documents} />
         </div>
       </div>
-
-      <section className="w-full">
-        <div className="mb-6">
-          <h2 className="text-neutral-900 tracking-tight">Progress Steps</h2>
-          <p className="text-[13px] text-neutral-500 mt-0.5">Real-time status of your onboarding pipeline.</p>
-        </div>
-        <ProgressSteps steps={data.progressSteps} />
-      </section>
 
       <section className="w-full">
         <AvailableFormsPanel forms={data.availableForms} />

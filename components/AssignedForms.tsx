@@ -185,8 +185,8 @@ const AssignedForms: React.FC<Props> = ({ forms }) => {
     return (
         <section>
             <div className="mb-6">
-                <h2 className="text-h3 text-neutral-900 tracking-tight">Assigned Forms</h2>
-                <p className="text-label text-neutral-500 mt-1">Core tasks required for your enrollment profile.</p>
+                <h2 className="text-h3 text-neutral-900 tracking-tight">Assigned Tasks</h2>
+                <p className="text-label text-neutral-500 mt-1">Items requested by the Betafits team.</p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {currentForms.map((form) => {

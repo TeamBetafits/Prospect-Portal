@@ -103,7 +103,7 @@ const AvailableForms: React.FC<Props> = ({ forms }) => {
     <>
       <section>
         <div className="mb-6">
-          <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Available Forms</h2>
+          <h2 className="text-xl font-bold text-neutral-900 tracking-tight">Additional Requests</h2>
           <p className="text-sm text-neutral-600 font-normal">Complete these forms to progress through your enrollment.</p>
         </div>
 
@@ -161,13 +161,13 @@ const AvailableForms: React.FC<Props> = ({ forms }) => {
         )}
       </section>
 
-      {/* Full Modal for All Available Forms */}
+      {/* Full Modal for Additional Requests */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-neutral-900/10 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-md shadow-modal w-full max-w-5xl max-h-[90vh] flex flex-col overflow-hidden border border-neutral-100">
             <div className="p-8 border-b border-neutral-50 flex justify-between items-center">
               <div>
-                <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">All Intake Modules</h2>
+                <h2 className="text-2xl font-bold text-neutral-900 tracking-tight">Additional Requests</h2>
                 <p className="text-sm text-neutral-500 font-normal">Choose a module to complete your profile.</p>
               </div>
               <button onClick={() => setIsModalOpen(false)} className="p-2 hover:bg-neutral-100 rounded-md text-neutral-400 transition-colors">

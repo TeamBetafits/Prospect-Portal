@@ -49,8 +49,7 @@ const CompanyDetails: React.FC<Props> = ({ data }) => {
     return (
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
         <div className="flex flex-col">
-          <h1 className="text-neutral-900 tracking-tight mb-2">Your Company Profile</h1>
-          <p className="text-neutral-500 font-medium">Review and manage your company's firmographic data and market reputation.</p>
+          <h1 className="text-neutral-900 tracking-tight mb-2">Company</h1>
         </div>
         <EmptyState />
       </div>
@@ -110,8 +109,7 @@ const CompanyDetails: React.FC<Props> = ({ data }) => {
       {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col">
-          <h1 className="text-neutral-900 tracking-tight mb-2">Your Company Profile</h1>
-          <p className="text-neutral-500 font-medium">Review and manage your company's firmographic data and market reputation.</p>
+          <h1 className="text-neutral-900 tracking-tight mb-2">Company</h1>
         </div>
         {!isEditing ? (
           <button 

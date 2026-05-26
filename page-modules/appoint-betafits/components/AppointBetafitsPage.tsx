@@ -89,7 +89,7 @@ export default function AppointBetafitsPage() {
             Launch Appointment Form
           </Link>
           <Link href="/benefit-plans" className="w-full sm:w-auto px-8 h-10 bg-transparent border border-neutral-700 text-neutral-300 font-bold rounded-sm hover:bg-neutral-800 transition-all inline-flex items-center justify-center">
-            Review Benefit Plans
+            Review Benefits
           </Link>
         </div>
       </div>
