@@ -14,7 +14,7 @@ export default function DashboardPage({ data }: Props) {
     <div className="space-y-8 animate-in fade-in duration-500">
       <section className="w-full">
         <div className="mb-6">
-          <h1 className="text-neutral-900 tracking-tight">Next Steps</h1>
+          <h1 className="text-neutral-900 tracking-tight">Dashboard</h1>
         </div>
         <ProgressSteps steps={data.progressSteps} />
       </section>
@@ -27,7 +27,6 @@ export default function DashboardPage({ data }: Props) {
           <div className="mb-6 flex items-start justify-between gap-4">
             <div>
               <h2 className="text-neutral-900 tracking-tight">Your Documents</h2>
-              <p className="text-[13px] text-neutral-500 mt-0.5">Uploaded files for review.</p>
             </div>
             <DocumentUpload
               buttonLabel="Upload Document"

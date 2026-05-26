@@ -26,7 +26,7 @@ function FormCard({
       </div>
       <div className="flex-shrink-0 text-right">
         <button onClick={() => onAssign(form)} disabled={isAssigning} className="btn-secondary h-9 px-5 text-[11px] uppercase tracking-wide disabled:opacity-50 disabled:cursor-not-allowed">
-          {isAssigning ? "Assigning..." : "Assign Form"}
+          {isAssigning ? "Assigning..." : "Assign"}
         </button>
       </div>
     </div>
@@ -95,7 +95,6 @@ export default function AvailableFormsPanel({ forms }: Props) {
               ))}
             </div>
             <div className="p-6 border-t border-neutral-100 flex justify-end">
-              <button onClick={availableForms.closeModal} className="btn-primary px-10 uppercase tracking-widest">Close List</button>
             </div>
           </div>
         </div>

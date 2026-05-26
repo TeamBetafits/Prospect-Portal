@@ -5,7 +5,7 @@ import './globals.css';
 
 export const metadata = {
     title: 'Betafits Portal',
-    description: 'Manage your intake workflow and document submissions',
+    description: 'Betafits Client Portal',
     icons: {
         icon: '/favicon.ico',
         shortcut: '/favicon.ico',
