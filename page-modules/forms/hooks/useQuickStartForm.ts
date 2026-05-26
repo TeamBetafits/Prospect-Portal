@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { FormStatus } from "@/types";
 import { FormValues } from "@/types/form";
 import { normalizeYearToDate } from "@/lib/mappings/quickStartMapping";
@@ -11,6 +12,7 @@ import { submitPortalForm, uploadQuickStartFiles } from "@/page-modules/forms/se
 import { QuickStartFormConfig, QuickStartFormState } from "@/page-modules/forms/types/formWorkflow";
 
 export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormState {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -53,6 +55,16 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
       isMounted = false;
     };
   }, [config.progressStorageKey]);
+
+  // Redirect to dashboard after successful submission
+  useEffect(() => {
+    if (isSuccess) {
+      const timer = setTimeout(() => {
+        router.push("/");
+      }, 1500); // Wait 1.5s for toast to be visible before redirecting
+      return () => clearTimeout(timer);
+    }
+  }, [isSuccess, router]);
 
   const handleSave = async (values: FormValues) => {
     saveFormProgress(config.progressStorageKey, values);

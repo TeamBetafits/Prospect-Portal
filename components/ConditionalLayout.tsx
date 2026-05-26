@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { Toaster } from "sonner";
 import Sidebar from "./Sidebar";
 import { usePortalShell } from "@/shared/hooks/usePortalShell";
 
@@ -14,7 +15,12 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
 
     // Auth pages and admin pages should not have sidebar
     if (isLoginPage || isAccessPage || isSetPasswordPage || isAdminPage) {
-        return <>{children}</>;
+        return (
+            <>
+                {children}
+                <Toaster position="top-right" richColors />
+            </>
+        );
     }
 
     return (
@@ -41,6 +47,7 @@ export default function ConditionalLayout({ children }: { children: React.ReactN
                     </div>
                 </main>
             </div>
+            <Toaster position="top-right" richColors />
         </div>
     );
 }
