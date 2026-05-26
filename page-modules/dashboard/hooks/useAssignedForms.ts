@@ -14,6 +14,7 @@ export function useAssignedForms(forms: AssignedForm[]) {
 
   const currentForms = forms.slice(startIndex, endIndex).map((form) => {
     const route = getAssignedFormRoute(form);
+    const isSubmitted = form.status === FormStatus.SUBMITTED || form.status === FormStatus.COMPLETED;
     return {
       ...form,
       displayName: cleanAssignedFormName(form),
@@ -22,12 +23,12 @@ export function useAssignedForms(forms: AssignedForm[]) {
       ctaLabel:
         form.status === FormStatus.NOT_STARTED
           ? "Start Form"
-          : form.status === FormStatus.SUBMITTED || form.status === FormStatus.COMPLETED
-            ? "Already Submitted"
+          : isSubmitted
+            ? "Edit Form"
             : form.status === FormStatus.IN_PROGRESS
               ? "Update"
               : "Continue",
-      isDisabled: form.status === FormStatus.SUBMITTED || form.status === FormStatus.COMPLETED,
+      isDisabled: form.status === FormStatus.COMPLETED, // Allow editing of SUBMITTED forms
     };
   });
 
