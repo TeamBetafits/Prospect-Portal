@@ -41,7 +41,7 @@ export default function DemographicInsights({ demographics }: Props) {
                         </svg>
                     </div>
                     <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Average Age</div>
-                    <div className="text-2xl font-black text-neutral-900">{demographics.averageAge} <span className="text-sm font-medium text-neutral-400">YRS</span></div>
+                    <div className="text-2xl font-black text-neutral-900">{Number(demographics.averageAge).toFixed(1)} <span className="text-sm font-medium text-neutral-400">YRS</span></div>
                 </div>
             </div>
             <div className="mt-8">
@@ -51,8 +51,8 @@ export default function DemographicInsights({ demographics }: Props) {
                         <div className="text-[16px] font-bold text-neutral-900">Workforce Split</div>
                     </div>
                     <div className="flex gap-4">
-                        <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">Male {demographics.malePercentage}%</span>
-                        <span className="text-sm font-bold text-pink-500 bg-pink-50 px-3 py-1 rounded-md">Female {demographics.femalePercentage}%</span>
+                        <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">Male {Number(demographics.malePercentage).toFixed(1)}%</span>
+                        <span className="text-sm font-bold text-pink-500 bg-pink-50 px-3 py-1 rounded-md">Female {Number(demographics.femalePercentage).toFixed(1)}%</span>
                     </div>
                 </div>
                 <div className="w-full h-3 bg-neutral-100 rounded-full overflow-hidden flex">

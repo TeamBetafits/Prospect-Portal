@@ -201,9 +201,9 @@ const BenefitsAnalysis: React.FC<Props> = ({ demographics, kpis, breakdown, repo
                  <div className="w-10 h-10 rounded-md bg-white flex items-center justify-center text-amber-600 mb-3 shadow-card">
                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                  </div>
-                 <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Average Age</div>
-                 <div className="text-2xl font-black text-neutral-900">{displayDemographics.averageAge} <span className="text-sm font-medium text-neutral-400">YRS</span></div>
-              </div>
+                  <div className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest mb-1">Average Age</div>
+                  <div className="text-2xl font-black text-neutral-900">{Number(displayDemographics.averageAge).toFixed(1)} <span className="text-sm font-medium text-neutral-400">YRS</span></div>
+               </div>
             </div>
 
             {/* Gender Composition Viz */}
@@ -214,8 +214,8 @@ const BenefitsAnalysis: React.FC<Props> = ({ demographics, kpis, breakdown, repo
                   <div className="text-[16px] font-bold text-neutral-900">Workforce Split</div>
                 </div>
                 <div className="flex gap-4">
-                  <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">Male {displayDemographics.malePercentage}%</span>
-                  <span className="text-sm font-bold text-pink-500 bg-pink-50 px-3 py-1 rounded-md">Female {displayDemographics.femalePercentage}%</span>
+                  <span className="text-sm font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-md">Male {Number(displayDemographics.malePercentage).toFixed(1)}%</span>
+                  <span className="text-sm font-bold text-pink-500 bg-pink-50 px-3 py-1 rounded-md">Female {Number(displayDemographics.femalePercentage).toFixed(1)}%</span>
                 </div>
               </div>
               <div className="w-full h-3 bg-neutral-100 rounded-full overflow-hidden flex">

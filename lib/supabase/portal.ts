@@ -1179,6 +1179,68 @@ function totalRateField(row: any, field: "premium" | "contribution" | "employee"
   return tiers.reduce((sum, item) => sum + item.employeeContribution, 0);
 }
 
+interface PlanEnrollment {
+  ee: number;
+  es: number;
+  ec: number;
+  ef: number;
+  total: number;
+}
+
+function normalizePlanNameForMatching(name: string): string {
+  if (!name) return "";
+  return name
+    .toLowerCase()
+    .replace(/\s+-\s+20[0-9]{2}.*$/, "") // Strip year suffixes like " - 2026"
+    .replace(/[^a-z0-9]+/g, "")          // Strip non-alphanumeric characters
+    .replace(/plus/g, "");               // Strip "plus"
+}
+
+function getTierKeyFromCoverageType(coverageType: string): 'ee' | 'es' | 'ec' | 'ef' {
+  const normalized = String(coverageType || "").trim().toUpperCase();
+  if (['EE', 'EMPLOYEE', 'EMPLOYEE ONLY'].includes(normalized)) return 'ee';
+  if (['ES', 'EMPLOYEE + SPOUSE', 'EMPLOYEE SPOUSE'].includes(normalized)) return 'es';
+  if (['EC', 'EMPLOYEE + CHILD', 'EMPLOYEE + CHILDREN', 'EMPLOYEE + CHILD(REN)', 'EMPLOYEE CHILD', 'EMPLOYEE CHILDREN'].includes(normalized)) return 'ec';
+  if (['EF', 'FAMILY', 'EMPLOYEE + FAMILY'].includes(normalized)) return 'ef';
+  
+  if (normalized.includes('SPOUSE') || normalized === 'ES') return 'es';
+  if (normalized.includes('CHILD') || normalized === 'EC') return 'ec';
+  if (normalized.includes('FAMILY') || normalized === 'EF') return 'ef';
+  return 'ee';
+}
+
+function getPlanEnrollment(plan: BenefitPlan, censusRows: any[]): PlanEnrollment {
+  const planNormalized = normalizePlanNameForMatching(plan.name);
+  const enrollment: PlanEnrollment = { ee: 0, es: 0, ec: 0, ef: 0, total: 0 };
+  
+  for (const row of censusRows) {
+    const isEmployee = String(row.relationship || "").toLowerCase() !== "dependent";
+    if (!isEmployee) continue;
+    
+    let censusPlanName = "";
+    let coverageType = "";
+    
+    if (plan.category === "Medical") {
+      censusPlanName = row.medical_plan_name;
+      coverageType = row.medical_coverage_type;
+    } else if (plan.category === "Dental") {
+      censusPlanName = row.dental_plan_name;
+      coverageType = row.dental_coverage_type;
+    } else if (plan.category === "Vision") {
+      censusPlanName = row.vision_plan_name;
+      coverageType = row.vision_coverage_type;
+    }
+    
+    if (censusPlanName && normalizePlanNameForMatching(censusPlanName) === planNormalized) {
+      const tierKey = getTierKeyFromCoverageType(coverageType);
+      enrollment[tierKey]++;
+      enrollment.total++;
+    }
+  }
+  
+  return enrollment;
+}
+
 export async function getBenefitsAnalysisData(companyId: string): Promise<{
   demographics: DemographicInsights | null;
   kpis: FinancialKPIs | null;
@@ -1195,24 +1257,39 @@ export async function getBenefitsAnalysisData(companyId: string): Promise<{
   const maleCount = employees.filter((row) => asString(row.gender).toLowerCase().startsWith("m")).length;
   const femaleCount = employees.filter((row) => asString(row.gender).toLowerCase().startsWith("f")).length;
 
-  const monthlyTotal = plans.plans.reduce((sum, plan) => sum + asNumber(plan.monthlyPremium), 0);
-  const employerTotal = plans.plans.reduce((sum, plan) => sum + asNumber(plan.monthlyEmployerContribution), 0);
-  const employeeTotal = plans.plans.reduce((sum, plan) => sum + asNumber(plan.monthlyEmployeeContribution), 0);
-
   if (!censusRows.length) {
     return {
       demographics: null,
       kpis: plans.plans.length
         ? {
-            totalMonthlyCost: monthlyTotal,
-            totalEmployerContribution: employerTotal,
-            totalEmployeeContribution: employeeTotal,
+            totalMonthlyCost: 0,
+            totalEmployerContribution: 0,
+            totalEmployeeContribution: 0,
             erCostPerEligible: 0,
           }
         : null,
-      breakdown: plans.plans.map((plan) => buildBudgetBreakdown(plan, 0)),
+      breakdown: plans.plans.map((plan) => buildBudgetBreakdown(plan, { ee: 0, es: 0, ec: 0, ef: 0, total: 0 }, 0)),
     };
   }
+
+  // 1. Calculate enrollments for each plan
+  const planEnrollments = plans.plans.map(plan => ({
+    plan,
+    enrollment: getPlanEnrollment(plan, censusRows)
+  }));
+  
+  // 2. Calculate enrollment-weighted costs for each plan
+  let monthlyTotal = 0;
+  let employerTotal = 0;
+  let employeeTotal = 0;
+  
+  const breakdown = planEnrollments.map(({ plan, enrollment }) => {
+    const b = buildBudgetBreakdown(plan, enrollment, employees.length);
+    monthlyTotal += b.monthlyTotal;
+    employerTotal += b.erCostMonth;
+    employeeTotal += b.eeCostMonth;
+    return b;
+  });
 
   return {
     demographics: {
@@ -1226,25 +1303,45 @@ export async function getBenefitsAnalysisData(companyId: string): Promise<{
       totalMonthlyCost: monthlyTotal,
       totalEmployerContribution: employerTotal || plans.strategies.reduce((sum, s) => sum + asNumber(s.flatAmount), 0),
       totalEmployeeContribution: employeeTotal,
-      erCostPerEligible: employees.length ? monthlyTotal / employees.length : 0,
+      erCostPerEligible: employees.length ? employerTotal / employees.length : 0,
     },
-    breakdown: plans.plans.map((plan) => buildBudgetBreakdown(plan, employees.length)),
+    breakdown,
   };
 }
 
-function buildBudgetBreakdown(plan: BenefitPlan, eligibleEmployees: number): BudgetBreakdown {
-  const monthlyTotal = asNumber(plan.monthlyPremium);
-  const erCostMonth = asNumber(plan.monthlyEmployerContribution);
-  const eeCostMonth = asNumber(plan.monthlyEmployeeContribution);
+function buildBudgetBreakdown(plan: BenefitPlan, enrollment: PlanEnrollment, eligibleEmployees: number): BudgetBreakdown {
+  const eeRate = plan.rates?.find(r => r.tierKey === 'ee') || { premium: 0, employerContribution: 0, employeeContribution: 0 };
+  const esRate = plan.rates?.find(r => r.tierKey === 'es') || { premium: 0, employerContribution: 0, employeeContribution: 0 };
+  const ecRate = plan.rates?.find(r => r.tierKey === 'ec') || { premium: 0, employerContribution: 0, employeeContribution: 0 };
+  const efRate = plan.rates?.find(r => r.tierKey === 'ef') || { premium: 0, employerContribution: 0, employeeContribution: 0 };
+  
+  const monthlyTotal = 
+    (eeRate.premium * enrollment.ee) +
+    (esRate.premium * enrollment.es) +
+    (ecRate.premium * enrollment.ec) +
+    (efRate.premium * enrollment.ef);
+    
+  const erCostMonth = 
+    (eeRate.employerContribution * enrollment.ee) +
+    (esRate.employerContribution * enrollment.es) +
+    (ecRate.employerContribution * enrollment.ec) +
+    (efRate.employerContribution * enrollment.ef);
+    
+  const eeCostMonth = 
+    (eeRate.employeeContribution * enrollment.ee) +
+    (esRate.employeeContribution * enrollment.es) +
+    (ecRate.employeeContribution * enrollment.ec) +
+    (efRate.employeeContribution * enrollment.ef);
+    
   return {
     benefit: plan.category,
     carrier: plan.carrier,
-    participation: eligibleEmployees ? 100 : 0,
+    participation: enrollment.total,
     monthlyTotal,
     annualTotal: monthlyTotal * 12,
     erCostMonth,
     eeCostMonth,
-    erCostEnrolled: eligibleEmployees ? erCostMonth / eligibleEmployees : 0,
+    erCostEnrolled: enrollment.total ? erCostMonth / enrollment.total : 0,
     erCostFte: eligibleEmployees ? erCostMonth / eligibleEmployees : 0,
   };
 }
