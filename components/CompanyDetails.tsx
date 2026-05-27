@@ -1,51 +1,53 @@
 "use client";
 
-
-import React, { useState, useEffect } from 'react';
-import { CompanyData } from '../types';
-import EmptyState from './EmptyState';
+import React, { useEffect, useMemo, useState } from "react";
+import EmptyState from "./EmptyState";
+import { CompanyData } from "../types";
+import { FieldGroupRenderer } from "@/shared/forms/FieldRenderer";
+import { getChangedFields, validateFieldValue } from "@/shared/forms/formatters";
+import {
+  ProspectCompanyDraft,
+  companyDataToDraft,
+  draftToCompanyData,
+  prospectCompanyFields,
+} from "@/page-modules/company-details/companyFieldRegistry";
 
 interface Props {
   data: CompanyData | null;
 }
 
-const DataRow: React.FC<{ label: string; value: string; isEditing?: boolean; onChange?: (val: string) => void }> = ({ label, value, isEditing, onChange }) => (
-  <div className="flex py-3 border-b border-neutral-100 last:border-0 items-center min-h-[52px]">
-    <div className="w-1/2 text-[13px] font-medium text-neutral-500">{label}</div>
-    <div className="w-1/2">
-      {isEditing && onChange ? (
-        <input
-          type="text"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-1.5 text-[14px] font-bold text-neutral-900 bg-neutral-50 border border-neutral-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 transition-all"
-        />
-      ) : (
-        <div className="text-[14px] font-bold text-neutral-900 leading-snug">{value || '-'}</div>
-      )}
-    </div>
-  </div>
-);
+const splitFields = {
+  company: prospectCompanyFields.filter((field) =>
+    ["name", "entityType", "legalName", "ein", "sicCode", "naicsCode", "address", "renewalMonth"].includes(field.key),
+  ),
+  contact: prospectCompanyFields.filter((field) =>
+    ["firstName", "lastName", "jobTitle", "phone", "email"].includes(field.key),
+  ),
+};
 
 const CompanyDetails: React.FC<Props> = ({ data }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [company, setCompany] = useState<CompanyData | null>(data);
-  const [draftCompany, setDraftCompany] = useState<CompanyData | null>(data);
-  const [hasChanges, setHasChanges] = useState(false);
+  const [draft, setDraft] = useState<ProspectCompanyDraft | null>(data ? companyDataToDraft(data) : null);
+  const [initialDraft, setInitialDraft] = useState<ProspectCompanyDraft | null>(data ? companyDataToDraft(data) : null);
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     setCompany(data);
-    setDraftCompany(data);
+    const nextDraft = data ? companyDataToDraft(data) : null;
+    setDraft(nextDraft);
+    setInitialDraft(nextDraft);
   }, [data]);
 
-  useEffect(() => {
-    const changed = JSON.stringify(company) !== JSON.stringify(draftCompany);
-    setHasChanges(changed);
-  }, [draftCompany, company]);
+  const hasChanges = useMemo(() => {
+    if (!draft || !initialDraft) return false;
+    return Object.keys(getChangedFields(initialDraft, draft)).length > 0;
+  }, [draft, initialDraft]);
 
-  if (!company || !company.name || !draftCompany) {
+  if (!company || !company.name || !draft || !initialDraft) {
     return (
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
         <div className="flex flex-col">
@@ -57,173 +59,178 @@ const CompanyDetails: React.FC<Props> = ({ data }) => {
   }
 
   const handleEdit = () => {
-    setDraftCompany(cloneCompanyData(company));
+    const nextDraft = companyDataToDraft(company);
+    setDraft(nextDraft);
+    setInitialDraft(nextDraft);
+    setFieldErrors({});
     setSaveError(null);
+    setSaveSuccess(false);
     setIsEditing(true);
   };
 
   const handleCancel = () => {
-    setDraftCompany(cloneCompanyData(company));
+    if (hasChanges && !window.confirm("Discard unsaved company changes?")) return;
+    setDraft(initialDraft);
+    setFieldErrors({});
     setSaveError(null);
     setIsEditing(false);
   };
 
+  const handleChange = (key: keyof ProspectCompanyDraft & string, value: unknown) => {
+    setDraft((current) => (current ? { ...current, [key]: String(value ?? "") } : current));
+    setFieldErrors((current) => {
+      const next = { ...current };
+      delete next[key];
+      return next;
+    });
+  };
+
+  const validateDraft = () => {
+    const nextErrors: Record<string, string> = {};
+    prospectCompanyFields.forEach((field) => {
+      const message = validateFieldValue(field, draft[field.key]);
+      if (message) nextErrors[field.key] = message;
+    });
+    setFieldErrors(nextErrors);
+    return Object.keys(nextErrors).length === 0;
+  };
+
   const handleSave = async () => {
-    if (!draftCompany) return;
+    if (!validateDraft() || isSaving || !hasChanges) return;
 
     setIsSaving(true);
     setSaveError(null);
+    setSaveSuccess(false);
 
     try {
-      const response = await fetch('/api/company/update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(draftCompany),
+      const nextCompany = draftToCompanyData(company, draft);
+      const updatePayload = {
+        name: draft.name,
+        entityType: draft.entityType,
+        legalName: draft.legalName,
+        ein: draft.ein,
+        sicCode: draft.sicCode,
+        naicsCode: draft.naicsCode,
+        address: draft.address,
+        renewalMonth: draft.renewalMonth,
+        contact: {
+          firstName: draft.firstName,
+          lastName: draft.lastName,
+          jobTitle: draft.jobTitle,
+          phone: draft.phone,
+          email: draft.email,
+        },
+      };
+      const response = await fetch("/api/company/update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(updatePayload),
       });
 
+      const result = await response.json().catch(() => null);
       if (!response.ok) {
-        const result = await response.json().catch(() => null);
-        throw new Error(result?.error || 'Failed to update company details');
+        if (result?.details && typeof result.details === "object") {
+          setFieldErrors(result.details as Record<string, string>);
+        }
+        throw new Error(result?.error || "Failed to update company details");
       }
 
-      setCompany(cloneCompanyData(draftCompany));
-      setDraftCompany(cloneCompanyData(draftCompany));
+      setCompany(nextCompany);
+      setDraft(companyDataToDraft(nextCompany));
+      setInitialDraft(companyDataToDraft(nextCompany));
       setIsEditing(false);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error) {
-      setSaveError(error instanceof Error ? error.message : 'Failed to update company details');
+      setSaveError(error instanceof Error ? error.message : "Failed to update company details");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const updateCompanyField = (field: keyof Pick<CompanyData, 'name' | 'entityType' | 'legalName' | 'ein' | 'sicCode' | 'naicsCode' | 'address' | 'renewalMonth'>, value: string) => {
-    setDraftCompany(prev => prev ? ({ ...prev, [field]: value }) : prev);
-  };
-
-  const updateContactField = (field: keyof CompanyData['contact'], value: string) => {
-    setDraftCompany(prev => prev ? ({ ...prev, contact: { ...prev.contact, [field]: value } }) : prev);
-  };
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pb-20">
-      {/* Page Header */}
       <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
         <div className="flex flex-col">
           <h1 className="text-neutral-900 tracking-tight mb-2">Company</h1>
         </div>
         {!isEditing ? (
-          <button 
+          <button
             onClick={handleEdit}
-            className="text-[13px] font-bold text-primary-600 hover:text-primary-700 flex items-center gap-1.5 transition-colors self-start"
+            className="self-start text-[13px] font-bold text-primary-600 transition-colors hover:text-primary-700"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-            </svg>
             Edit
           </button>
         ) : (
           <div className="flex items-center gap-3 self-start">
-            <button 
+            <button
               onClick={handleCancel}
-              className="text-[13px] font-bold text-neutral-500 hover:text-neutral-700 transition-colors"
+              disabled={isSaving}
+              className="text-[13px] font-bold text-neutral-500 transition-colors hover:text-neutral-700 disabled:opacity-50"
             >
               Cancel
             </button>
-            <button 
+            <button
               onClick={handleSave}
               disabled={!hasChanges || isSaving}
-              className={`text-[13px] font-bold px-3 py-1 rounded-sm transition-all ${
+              className={`rounded-md px-4 py-2 text-[13px] font-bold transition-all ${
                 hasChanges && !isSaving
-                  ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-sm' 
-                  : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                  ? "bg-primary-600 text-white shadow-sm hover:bg-primary-700"
+                  : "bg-neutral-100 text-neutral-400"
               }`}
             >
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? "Saving..." : "Save Changes"}
             </button>
           </div>
         )}
       </div>
 
-      {/* 1x2 Grid Layout for the remaining Sections */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        
-        {/* 1. Company Info Card */}
-        <section className="bg-white border border-neutral-200 rounded-md shadow-card overflow-hidden flex flex-col hover:shadow-elevated transition-all">
-          <div className="px-8 py-6 border-b border-neutral-100 bg-neutral-50/50">
+      {saveError ? (
+        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-700">
+          {saveError}
+        </div>
+      ) : null}
+      {saveSuccess ? (
+        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-[13px] font-medium text-green-700">
+          Company details saved.
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-8 md:grid-cols-2">
+        <section className="rounded-md border border-neutral-200 bg-white shadow-card">
+          <div className="border-b border-neutral-100 bg-neutral-50/50 px-8 py-6">
             <h2 className="text-lg font-bold text-neutral-900">Company Info</h2>
           </div>
-          <div className="p-8 space-y-0.5">
-            <DataRow label="Company Name" value={draftCompany.name} isEditing={isEditing} onChange={(val) => updateCompanyField('name', val)} />
-            <DataRow label="Entity Type" value={draftCompany.entityType} isEditing={isEditing} onChange={(val) => updateCompanyField('entityType', val)} />
-            <DataRow label="Entity Legal Name" value={draftCompany.legalName} isEditing={isEditing} onChange={(val) => updateCompanyField('legalName', val)} />
-            <DataRow label="EIN" value={draftCompany.ein} isEditing={isEditing} onChange={(val) => updateCompanyField('ein', val)} />
-            <DataRow label="SIC Code" value={draftCompany.sicCode} isEditing={isEditing} onChange={(val) => updateCompanyField('sicCode', val)} />
-            <DataRow label="NAICS Code" value={draftCompany.naicsCode} isEditing={isEditing} onChange={(val) => updateCompanyField('naicsCode', val)} />
-            <DataRow label="HQ Address" value={draftCompany.address} isEditing={isEditing} onChange={(val) => updateCompanyField('address', val)} />
-            <DataRow label="Renewal Month" value={draftCompany.renewalMonth} isEditing={isEditing} onChange={(val) => updateCompanyField('renewalMonth', val)} />
+          <div className="p-8">
+            <FieldGroupRenderer
+              fields={splitFields.company}
+              values={draft}
+              mode={isEditing ? "edit" : "read"}
+              errors={fieldErrors}
+              disabled={isSaving}
+              onChange={handleChange}
+            />
           </div>
         </section>
 
-        {/* 2. Contact Info Card */}
-        <section className="bg-white border border-neutral-200 rounded-md shadow-card overflow-hidden flex flex-col hover:shadow-elevated transition-all">
-          <div className="px-8 py-6 border-b border-neutral-100 bg-neutral-50/50">
+        <section className="rounded-md border border-neutral-200 bg-white shadow-card">
+          <div className="border-b border-neutral-100 bg-neutral-50/50 px-8 py-6">
             <h2 className="text-lg font-bold text-neutral-900">Contact Info</h2>
           </div>
-          {saveError && (
-            <div className="mx-8 mt-5 rounded-sm border border-red-200 bg-red-50 px-4 py-3 text-[13px] font-medium text-red-700">
-              {saveError}
-            </div>
-          )}
-          <div className="p-8 space-y-0.5">
-            <DataRow 
-              label="First Name" 
-              value={draftCompany.contact.firstName}
-              isEditing={isEditing}
-              onChange={(val) => updateContactField('firstName', val)}
-            />
-            <DataRow 
-              label="Last Name" 
-              value={draftCompany.contact.lastName}
-              isEditing={isEditing}
-              onChange={(val) => updateContactField('lastName', val)}
-            />
-            <DataRow 
-              label="Job Title" 
-              value={draftCompany.contact.jobTitle}
-              isEditing={isEditing}
-              onChange={(val) => updateContactField('jobTitle', val)}
-            />
-            <DataRow 
-              label="Phone Number" 
-              value={draftCompany.contact.phone}
-              isEditing={isEditing}
-              onChange={(val) => updateContactField('phone', val)}
-            />
-            <DataRow 
-              label="Work Email" 
-              value={draftCompany.contact.email}
-              isEditing={isEditing}
-              onChange={(val) => updateContactField('email', val)}
+          <div className="p-8">
+            <FieldGroupRenderer
+              fields={splitFields.contact}
+              values={draft}
+              mode={isEditing ? "edit" : "read"}
+              errors={fieldErrors}
+              disabled={isSaving}
+              onChange={handleChange}
             />
           </div>
         </section>
-
       </div>
     </div>
   );
 };
-
-function cloneCompanyData(data: CompanyData): CompanyData {
-  return {
-    ...data,
-    contact: { ...data.contact },
-    workforce: {
-      ...data.workforce,
-      otherUsCities: [...data.workforce.otherUsCities],
-      otherCountries: [...data.workforce.otherCountries],
-    },
-    glassdoor: { ...data.glassdoor },
-  };
-}
 
 export default CompanyDetails;

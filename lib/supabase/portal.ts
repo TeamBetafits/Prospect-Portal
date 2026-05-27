@@ -616,7 +616,8 @@ export async function getGroupDataFields(companyId: string): Promise<{ recordId:
       "City": location?.city,
       "State / Province": location?.state,
       "ZIP Code": location?.zip_code,
-      "First Name": contact?.client_contacts,
+      "First Name": contact?.first_name || contact?.client_contacts,
+      "Last Name": contact?.last_name,
       "Job Title": contact?.title,
       "Phone Number": contact?.phone,
       "Work Email": contact?.email,
@@ -644,7 +645,7 @@ export async function getCompanyData(companyId: string): Promise<CompanyData | n
     renewalMonth: asString(fields["Renewal Month"]),
     contact: {
       firstName: asString(fields["First Name"]),
-      lastName: "",
+      lastName: asString(fields["Last Name"]),
       jobTitle: asString(fields["Job Title"]),
       phone: asString(fields["Phone Number"]),
       email: asString(fields["Work Email"]),
@@ -685,6 +686,8 @@ export async function updateCompanyData(companyId: string, body: Json): Promise<
 
   const contact = typeof body.contact === "object" && body.contact ? (body.contact as Json) : {};
   await upsertSingleton("contacts", companyId, {
+    first_name: pick(contact, "firstName"),
+    last_name: pick(contact, "lastName"),
     title: pick(contact, "jobTitle"),
     phone: pick(contact, "phone"),
     email: pick(contact, "email"),
