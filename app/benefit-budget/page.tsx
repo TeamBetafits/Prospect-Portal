@@ -1,9 +1,10 @@
 import React from 'react';
 import { unstable_noStore } from 'next/cache';
+import { redirect } from 'next/navigation';
 import DashboardHeader from '@/components/DashboardHeader';
 import BenefitBudgetTabs from '@/components/BenefitBudgetTabs';
 import { getCompanyId } from '@/lib/auth/getCompanyId';
-import { getBenefitsAnalysisData } from '@/lib/supabase/portal';
+import { getBenefitsAnalysisData, checkPublishedBudgetExists } from '@/lib/supabase/portal';
 import { BudgetBreakdown, DemographicInsights as DemographicInsightsType, FinancialKPIs } from '@/types';
 
 export const dynamic = 'force-dynamic';
@@ -27,19 +28,27 @@ export default async function BenefitBudgetPage() {
   unstable_noStore();
   const companyId = await getCompanyId();
 
+  if (!companyId) {
+    redirect('/');
+  }
+
+  // Enforce server-side route security: redirect to homepage if no published budget exists
+  const hasPublished = await checkPublishedBudgetExists(companyId);
+  if (!hasPublished) {
+    redirect('/');
+  }
+
   let demographics = emptyDemographics;
   let kpis = emptyKpis;
   let breakdown: BudgetBreakdown[] = [];
 
-  if (companyId) {
-    try {
-      const data = await getBenefitsAnalysisData(companyId);
-      demographics = data.demographics || emptyDemographics;
-      kpis = data.kpis || emptyKpis;
-      breakdown = data.breakdown;
-    } catch (error) {
-      console.error('[BenefitBudgetPage] Error fetching Supabase data:', error);
-    }
+  try {
+    const data = await getBenefitsAnalysisData(companyId);
+    demographics = data.demographics || emptyDemographics;
+    kpis = data.kpis || emptyKpis;
+    breakdown = data.breakdown;
+  } catch (error) {
+    console.error('[BenefitBudgetPage] Error fetching Supabase data:', error);
   }
 
   return (

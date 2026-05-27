@@ -1331,11 +1331,101 @@ function getPlanEnrollment(plan: BenefitPlan, censusRows: any[]): PlanEnrollment
   return enrollment;
 }
 
+export async function checkPublishedBudgetExists(companyId: string): Promise<boolean> {
+  try {
+    const { count, error } = await supabaseAdmin
+      .from('benefit_budget_versions')
+      .select('*', { count: 'exact', head: true })
+      .eq('company_id', companyId);
+    
+    if (error) {
+      if (error.code === "PGRST116" || error.message?.includes("does not exist") || error.message?.includes("not found")) {
+        return false;
+      }
+      console.error('[checkPublishedBudgetExists] Error:', error);
+      return false;
+    }
+    return (count ?? 0) > 0;
+  } catch (err) {
+    console.error('[checkPublishedBudgetExists] Catch error:', err);
+    return false;
+  }
+}
+
 export async function getBenefitsAnalysisData(companyId: string): Promise<{
   demographics: DemographicInsights | null;
   kpis: FinancialKPIs | null;
   breakdown: BudgetBreakdown[];
 }> {
+  // 1. Check for published budget versions
+  try {
+    const { data: versions, error: versionError } = await supabaseAdmin
+      .from('benefit_budget_versions')
+      .select('*')
+      .eq('company_id', companyId)
+      .order('published_at', { ascending: false })
+      .limit(1);
+
+    if (!versionError && versions && versions.length > 0) {
+      const published = versions[0];
+      const totals = published.totals || {};
+      const categories = published.categories || [];
+
+      // Query census rows live just for demographics, if census exists
+      const censusRows = await list<any>(supabaseAdmin.from("census").select("*").eq("company_id", companyId).limit(1000));
+      const employees = censusRows.filter((row) => String(row.relationship || "").toLowerCase() !== "dependent");
+      const ages = employees.map((row) => asNumber(row.age)).filter(Boolean);
+      const salaries = employees.map((row) => asNumber(row.compensation)).filter(Boolean);
+      const maleCount = employees.filter((row) => asString(row.gender).toLowerCase().startsWith("m")).length;
+      const femaleCount = employees.filter((row) => asString(row.gender).toLowerCase().startsWith("f")).length;
+
+      const breakdown: BudgetBreakdown[] = [];
+      for (const category of categories) {
+        const plans = category.plans || [];
+        for (const plan of plans) {
+          const planSummary = plan.summary || {};
+          breakdown.push({
+            benefit: category.benefitType || "Medical",
+            carrier: plan.carrier || "",
+            participation: planSummary.enrolledCount || 0,
+            monthlyTotal: planSummary.monthlyPremiumTotal || 0,
+            annualTotal: planSummary.annualPremiumTotal || 0,
+            erCostMonth: planSummary.monthlyErTotal || 0,
+            eeCostMonth: planSummary.monthlyEeTotal || 0,
+            erCostEnrolled: planSummary.erCostPerEnrolled || 0,
+            erCostFte: totals.eligibleCount ? (planSummary.monthlyErTotal / totals.eligibleCount) : 0,
+          });
+        }
+      }
+
+      return {
+        demographics: censusRows.length ? {
+          eligibleEmployees: employees.length,
+          averageSalary: average(salaries),
+          averageAge: average(ages),
+          malePercentage: employees.length ? (maleCount / employees.length) * 100 : 0,
+          femalePercentage: employees.length ? (femaleCount / employees.length) * 100 : 0,
+        } : {
+          eligibleEmployees: totals.eligibleCount || 0,
+          averageSalary: 0,
+          averageAge: 0,
+          malePercentage: 0,
+          femalePercentage: 0,
+        },
+        kpis: {
+          totalMonthlyCost: totals.monthlyPremium || totals.totalMonthlyBudget || 0,
+          totalEmployerContribution: totals.monthlyEmployerPremium || (totals.totalEmployerAnnualCost / 12) || 0,
+          totalEmployeeContribution: totals.monthlyEmployeePremium || (totals.totalEmployeeAnnualCost / 12) || 0,
+          erCostPerEligible: totals.erCostPerEligible || 0,
+        },
+        breakdown,
+      };
+    }
+  } catch (err) {
+    console.error('[getBenefitsAnalysisData] Error checking published versions:', err);
+  }
+
+  // Fallback to legacy/dynamic building if no published versions found
   const [censusRows, plans] = await Promise.all([
     list<any>(supabaseAdmin.from("census").select("*").eq("company_id", companyId).limit(1000)),
     getBenefitPlansData(companyId),
