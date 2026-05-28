@@ -92,6 +92,14 @@ export function cleanAssignedFormName(form: AssignedForm): string {
     return form.availableFormId === "eBxXtLZdK4us" ? "Quick Start" : "Form";
   }
 
+  // Prospect-facing rename: never expose "Missing Premiums" label
+  if (
+    form.availableFormId === "missing-premiums-manual-input" ||
+    displayName.toLowerCase().includes("missing premiums")
+  ) {
+    return "Confirm Plan Premiums";
+  }
+
   displayName = displayName
     .replace(/^[-\s]+/, "")
     .replace(/^Assigned to:\s*/i, "")

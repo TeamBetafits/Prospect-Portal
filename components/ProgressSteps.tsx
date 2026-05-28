@@ -18,6 +18,8 @@ const ProgressSteps: React.FC<Props> = ({ steps }) => {
         return 'bg-warning-bg text-warning-500 border-warning-500/20';
       case ProgressStatus.NOT_REQUESTED:
         return 'bg-neutral-100 text-neutral-500 border-neutral-200';
+      case ProgressStatus.ACTION_NEEDED:
+        return 'bg-warning-bg text-warning-600 border-warning-500/30';
       default:
         return 'bg-neutral-100 text-neutral-500 border-neutral-200';
     }
@@ -31,6 +33,8 @@ const ProgressSteps: React.FC<Props> = ({ steps }) => {
         return 'Not Started';
       case ProgressStatus.NOT_REQUESTED:
         return 'Not Requested';
+      case ProgressStatus.ACTION_NEEDED:
+        return 'Action Needed';
       default:
         return status;
     }

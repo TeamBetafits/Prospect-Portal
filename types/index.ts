@@ -10,7 +10,8 @@ export enum ProgressStatus {
   IN_REVIEW = 'In Review',
   FLAGGED = 'Flagged',
   MISSING = 'Missing',
-  NOT_REQUESTED = 'Not Requested'
+  NOT_REQUESTED = 'Not Requested',
+  ACTION_NEEDED = 'Action Needed',
 }
 
 export enum DocumentStatus {
