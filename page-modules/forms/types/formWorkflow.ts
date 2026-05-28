@@ -8,6 +8,8 @@ export interface PortalFormComponentProps {
   isSubmitting?: boolean;
   initialValues?: FormValues;
   companyId?: string;
+  /** Fields that should be rendered read-only for the prospect (derived from editableBy metadata). */
+  readonlyFields?: Record<string, boolean>;
 }
 
 export interface PortalFormPageConfig {
@@ -24,6 +26,7 @@ export interface PortalFormPageConfig {
 
 export interface PortalFormState {
   initialValues: FormValues;
+  readonlyFields: Record<string, boolean>;
   isSubmitting: boolean;
   isSuccess: boolean;
   submitError: string;
@@ -46,6 +49,7 @@ export interface QuickStartFormConfig {
 export interface QuickStartFormState {
   formStatus: FormStatus | null;
   initialValues: FormValues;
+  readonlyFields: Record<string, boolean>;
   isCheckingStatus: boolean;
   isSubmitting: boolean;
   isSuccess: boolean;

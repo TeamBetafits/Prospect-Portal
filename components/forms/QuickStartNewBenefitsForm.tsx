@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { FormValues } from '@/types/form';
 import { QUICK_START_NEW_BENEFITS_FORM_DATA } from '@/constants/quickStartNewBenefitsForm';
 import FormSection from './FormSection';
@@ -9,12 +9,22 @@ interface Props {
     onSave: (values: FormValues) => Promise<void>;
     onSubmit: (values: FormValues) => Promise<void>;
     isSubmitting?: boolean;
+    initialValues?: FormValues;
+    readonlyFields?: Record<string, boolean>;
 }
 
-const QuickStartNewBenefitsForm: React.FC<Props> = ({ onSave, onSubmit, isSubmitting = false }) => {
+const QuickStartNewBenefitsForm: React.FC<Props> = ({ onSave, onSubmit, isSubmitting = false, initialValues, readonlyFields }) => {
     const [currentPage, setCurrentPage] = useState(0);
     const [values, setValues] = useState<FormValues>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
+    const hasMergedInitial = useRef(false);
+
+    useEffect(() => {
+        if (hasMergedInitial.current) return;
+        if (!initialValues || Object.keys(initialValues).length === 0) return;
+        setValues(prev => ({ ...initialValues, ...prev }));
+        hasMergedInitial.current = true;
+    }, [initialValues]);
 
     const pages = QUICK_START_NEW_BENEFITS_FORM_DATA.pages;
     const currentPageData = pages[currentPage];
@@ -94,6 +104,7 @@ const QuickStartNewBenefitsForm: React.FC<Props> = ({ onSave, onSubmit, isSubmit
                             values={values}
                             errors={errors}
                             onChange={handleFieldChange}
+                            readonlyFields={readonlyFields}
                         />
                     ))}
                 </div>

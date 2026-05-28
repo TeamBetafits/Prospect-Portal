@@ -73,6 +73,7 @@ function QuickStartFormPageInner({ config }: Props) {
             initialValues={quickStartForm.initialValues}
             storageKey={config.progressStorageKey}
             isEditMode={isEditMode || isSubmitted}
+            readonlyFields={quickStartForm.readonlyFields}
           />
         </>
       )}

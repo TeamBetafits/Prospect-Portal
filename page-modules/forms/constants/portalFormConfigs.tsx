@@ -19,7 +19,6 @@ import UpdateQuickstartForm from "@/components/forms/UpdateQuickstartForm";
 import WorkersCompensationForm from "@/components/forms/WorkersCompensationForm";
 import { MEDICAL_COVERAGE_SURVEY_FORM_DATA } from "@/constants/medicalCoverageSurveyForm";
 import { getAppointBetafitsInitialValues } from "@/page-modules/forms/services/appointBetafitsPrefill";
-import { getBenefitsPulseInitialValues } from "@/page-modules/forms/services/benefitsPulsePrefill";
 import { PortalFormPageConfig } from "@/page-modules/forms/types/formWorkflow";
 
 export const PORTAL_FORM_CONFIGS = {
@@ -31,7 +30,6 @@ export const PORTAL_FORM_CONFIGS = {
     progressStorageKey: "form_eQ7FVU76PDus_progress",
     subtitle: "Please complete this form to proceed.",
     title: "Benefits Feedback Form",
-    loadInitialValues: getBenefitsPulseInitialValues,
   },
   gn6wnjpjktus: {
     breadcrumbLabel: "Update PEO/HR",

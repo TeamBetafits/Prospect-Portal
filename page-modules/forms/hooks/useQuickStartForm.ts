@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FormStatus } from "@/types";
 import { FormValues } from "@/types/form";
 import { normalizeYearToDate } from "@/lib/mappings/quickStartMapping";
-import { clearFormProgress, saveFormProgress } from "@/page-modules/forms/services/formProgressService";
-import { getAssignedFormStatus, getLastSubmissionAnswers, getQuickStartInitialValues } from "@/page-modules/forms/services/formStatusService";
-import { mapQuickStartGroupDataToFormValues } from "@/page-modules/forms/services/quickStartPrefill";
+import { clearFormProgress, readSavedFormProgress, saveFormProgress } from "@/page-modules/forms/services/formProgressService";
+import { getAssignedFormStatus, getLastSubmissionAnswers } from "@/page-modules/forms/services/formStatusService";
 import { submitPortalForm, uploadQuickStartFiles } from "@/page-modules/forms/services/formSubmissionService";
 import { QuickStartFormConfig, QuickStartFormState } from "@/page-modules/forms/types/formWorkflow";
+import { useFormPreFill } from "@/page-modules/forms/hooks/useFormPreFill";
 
 export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormState {
   const router = useRouter();
@@ -19,6 +19,9 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
   const [formStatus, setFormStatus] = useState<FormStatus | null>(null);
   const [isCheckingStatus, setIsCheckingStatus] = useState(config.checkSubmissionStatus);
   const [initialValues, setInitialValues] = useState<FormValues>({});
+  const hasSetInitialValues = useRef(false);
+
+  const preFill = useFormPreFill({ formId: config.formId });
 
   useEffect(() => {
     let isMounted = true;
@@ -46,22 +49,35 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
     let isMounted = true;
 
     async function loadInitialValues() {
-      // Prefer last submission answers (exact form keys) over group-data mapping
+      // Priority 1: last submission answers (exact form field keys, for edit mode)
       try {
         const submissionAnswers = await getLastSubmissionAnswers(config.formId);
         if (submissionAnswers && Object.keys(submissionAnswers).length > 0) {
-          if (isMounted) setInitialValues(submissionAnswers as FormValues);
+          if (isMounted) {
+            setInitialValues(submissionAnswers as FormValues);
+            hasSetInitialValues.current = true;
+          }
           return;
         }
       } catch (error) {
         console.error("Error loading last submission answers:", error);
       }
 
-      // Fall back to group-data prefill for first-time visitors
+      // Priority 2: saved local draft progress
       try {
-        const values = await getQuickStartInitialValues(config.progressStorageKey, mapQuickStartGroupDataToFormValues);
-        if (isMounted) setInitialValues(values);
-      } catch {}
+        const savedValues = readSavedFormProgress(config.progressStorageKey);
+        if (savedValues && Object.keys(savedValues).length > 0) {
+          if (isMounted) {
+            setInitialValues(savedValues);
+            hasSetInitialValues.current = true;
+          }
+          return;
+        }
+      } catch {
+        // localStorage unavailable; fall through to pre-fill
+      }
+
+      // Priority 3: company group-data pre-fill — handled by the separate effect below
     }
 
     loadInitialValues();
@@ -69,6 +85,17 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
       isMounted = false;
     };
   }, [config.progressStorageKey, config.formId]);
+
+  // Priority 3: apply pre-fill once the hook resolves (only when higher-priority
+  // sources did not provide values)
+  useEffect(() => {
+    if (preFill.isLoading) return;
+    if (hasSetInitialValues.current) return;
+    if (Object.keys(preFill.values).length === 0) return;
+
+    setInitialValues(preFill.values);
+    hasSetInitialValues.current = true;
+  }, [preFill.isLoading, preFill.values]);
 
   // Redirect to dashboard after successful submission
   useEffect(() => {
@@ -118,6 +145,7 @@ export function useQuickStartForm(config: QuickStartFormConfig): QuickStartFormS
     isCheckingStatus,
     isSubmitting,
     isSuccess,
+    readonlyFields: preFill.readonlyFields,
     submitError,
   };
 }
