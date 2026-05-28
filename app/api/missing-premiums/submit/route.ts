@@ -34,27 +34,28 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { updates, notes, supporting_documents } = body;
 
-    if (!Array.isArray(updates) || updates.length === 0) {
+    const hasDocuments = Array.isArray(supporting_documents) && supporting_documents.length > 0;
+    const hasUpdates = Array.isArray(updates) && updates.length > 0;
+
+    if (!hasUpdates && !hasDocuments) {
       return NextResponse.json({ error: "No updates provided" }, { status: 400 });
     }
 
     // Validate and whitelist — only _user fields are ever written
-    const sanitizedUpdates = updates
-      .map((u: Record<string, unknown>) => {
-        const out: Record<string, unknown> = {};
-        if (typeof u.id === "string" && u.id) out.id = u.id;
-        for (const [key, value] of Object.entries(u)) {
-          if (USER_FIELDS.has(key) && typeof value === "number" && !Number.isNaN(value) && value >= 0) {
-            out[key] = value;
-          }
-        }
-        return out;
-      })
-      .filter((u) => typeof u.id === "string" && Object.keys(u).length > 1);
-
-    if (sanitizedUpdates.length === 0) {
-      return NextResponse.json({ error: "No valid premium fields in updates" }, { status: 400 });
-    }
+    const sanitizedUpdates = hasUpdates
+      ? (updates as Record<string, unknown>[])
+          .map((u) => {
+            const out: Record<string, unknown> = {};
+            if (typeof u.id === "string" && u.id) out.id = u.id;
+            for (const [key, value] of Object.entries(u)) {
+              if (USER_FIELDS.has(key) && typeof value === "number" && !Number.isNaN(value) && value >= 0) {
+                out[key] = value;
+              }
+            }
+            return out;
+          })
+          .filter((u) => typeof u.id === "string" && Object.keys(u).length > 1)
+      : [];
 
     // Security fence: only allow updates to rows whose plan belongs to this company
     const { data: companyPlans, error: plansError } = await supabaseAdmin
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     // Main premium fields (premium_ee, etc.) are not touched until admin approves.
     const results: { id: string; ok: boolean; error?: string }[] = [];
 
-    for (const update of sanitizedUpdates) {
+    for (const update of sanitizedUpdates) {  // no-op when document-only
       const id = update.id as string;
       const patch: Record<string, number> = {};
       for (const [key, value] of Object.entries(update)) {
