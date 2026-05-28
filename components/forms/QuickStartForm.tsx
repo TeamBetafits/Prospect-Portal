@@ -202,6 +202,7 @@ export default function QuickStartForm({
   isSubmitting: externalSubmitting = false,
   storageKey,
   isEditMode = false,
+  readonlyFields: _readonlyFields = {},
 }: {
   initialValues?: any;
   onSubmit?: (values: any, mappedPayloads: any) => Promise<void>;
@@ -209,6 +210,7 @@ export default function QuickStartForm({
   isSubmitting?: boolean;
   storageKey?: string;
   isEditMode?: boolean;
+  readonlyFields?: Record<string, boolean>;
 }) {
   const [page, setPage] = useState(1);
 
