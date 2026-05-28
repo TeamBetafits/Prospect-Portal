@@ -55,6 +55,7 @@ export default function PortalFormPage({ configKey }: Props) {
         isSubmitting={portalForm.isSubmitting}
         initialValues={portalForm.initialValues}
         companyId={companyId}
+        readonlyFields={portalForm.readonlyFields}
       />
     </div>
   );

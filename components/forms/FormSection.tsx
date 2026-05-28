@@ -8,9 +8,10 @@ interface Props {
     values: FormValues;
     errors: Record<string, string>;
     onChange: (id: string, value: any) => void;
+    readonlyFields?: Record<string, boolean>;
 }
 
-const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => {
+const FormSection: React.FC<Props> = ({ section, values, errors, onChange, readonlyFields }) => {
     const [isCollapsed, setIsCollapsed] = useState(section.defaultCollapsed ?? false);
 
     return (
@@ -61,9 +62,12 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                 value={values[question.id] || ''}
                                 onChange={(e) => onChange(question.id, e.target.value)}
                                 placeholder={question.placeholder}
-                                className={`px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all placeholder:text-gray-400 focus:ring-2 focus:ring-brand-100 ${errors[question.id]
-                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400'
-                                        : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400'
+                                disabled={readonlyFields?.[question.id] === true}
+                                className={`px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all placeholder:text-gray-400 ${errors[question.id]
+                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400 focus:ring-2 focus:ring-brand-100'
+                                        : readonlyFields?.[question.id]
+                                        ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed'
+                                        : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
                                     }`}
                             />
                         ) : question.type === 'number' ? (
@@ -83,7 +87,8 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                         step="1"
                                         value={values[question.id] || '1'}
                                         onChange={(e) => onChange(question.id, e.target.value)}
-                                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                                        disabled={readonlyFields?.[question.id] === true}
+                                        className={`w-full h-2 bg-gray-200 rounded-lg appearance-none accent-brand-500 ${readonlyFields?.[question.id] ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}
                                     />
                                     <div className="flex justify-center">
                                         <span className="text-sm font-semibold text-gray-700">
@@ -102,8 +107,9 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                             <button
                                                 key={rating}
                                                 type="button"
-                                                onClick={() => onChange(question.id, String(rating))}
-                                                className={`w-12 h-12 rounded-lg font-semibold text-sm transition-all ${
+                                                onClick={() => !readonlyFields?.[question.id] && onChange(question.id, String(rating))}
+                                                disabled={readonlyFields?.[question.id] === true}
+                                                className={`w-12 h-12 rounded-lg font-semibold text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                                                     values[question.id] === String(rating)
                                                         ? 'bg-brand-500 text-white shadow-md scale-105'
                                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
@@ -129,9 +135,12 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                     }}
                                     placeholder={question.placeholder}
                                     min="0"
-                                    className={`px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all placeholder:text-gray-400 focus:ring-2 focus:ring-brand-100 ${errors[question.id]
-                                            ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400'
-                                            : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400'
+                                    disabled={readonlyFields?.[question.id] === true}
+                                    className={`px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all placeholder:text-gray-400 ${errors[question.id]
+                                            ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400 focus:ring-2 focus:ring-brand-100'
+                                            : readonlyFields?.[question.id]
+                                            ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed'
+                                            : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
                                         }`}
                                 />
                             )
@@ -142,9 +151,12 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                 onChange={(e) => onChange(question.id, e.target.value)}
                                 placeholder={question.placeholder}
                                 rows={4}
-                                className={`px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all placeholder:text-gray-400 focus:ring-2 focus:ring-brand-100 ${errors[question.id]
-                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400'
-                                        : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400'
+                                disabled={readonlyFields?.[question.id] === true}
+                                className={`px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all placeholder:text-gray-400 ${errors[question.id]
+                                        ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400 focus:ring-2 focus:ring-brand-100'
+                                        : readonlyFields?.[question.id]
+                                        ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed resize-none'
+                                        : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
                                     }`}
                             />
                         ) : question.type === 'file' ? (
@@ -154,6 +166,7 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                     id={question.id}
                                     accept={question.accept}
                                     multiple={question.multiple}
+                                    disabled={readonlyFields?.[question.id] === true}
                                     onChange={async (e) => {
                                         const files = e.target.files;
                                         if (files && files.length > 0) {
@@ -169,6 +182,8 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                     }}
                                     className={`w-full px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-brand-500 file:text-white hover:file:bg-brand-600 file:cursor-pointer ${errors[question.id]
                                             ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400'
+                                            : readonlyFields?.[question.id]
+                                            ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed'
                                             : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400 focus:ring-2 focus:ring-brand-100'
                                         }`}
                                 />
@@ -198,9 +213,12 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                     id={question.id}
                                     value={values[question.id] || ''}
                                     onChange={(e) => onChange(question.id, e.target.value)}
-                                    className={`w-full px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all appearance-none cursor-pointer focus:ring-2 focus:ring-brand-100 ${errors[question.id]
-                                            ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400'
-                                            : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400'
+                                    disabled={readonlyFields?.[question.id] === true}
+                                    className={`w-full px-3 py-2.5 rounded-md border text-[14px] outline-none transition-all appearance-none ${errors[question.id]
+                                            ? 'border-red-300 bg-red-50 text-red-900 focus:border-red-400 focus:ring-2 focus:ring-brand-100 cursor-pointer'
+                                            : readonlyFields?.[question.id]
+                                            ? 'border-gray-200 bg-gray-50 text-gray-500 cursor-not-allowed'
+                                            : 'border-gray-200 bg-white text-gray-900 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 cursor-pointer'
                                         }`}
                                 >
                                     <option value="" disabled>Select an option</option>
@@ -228,8 +246,9 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                             <button
                                                 key={opt.value}
                                                 type="button"
-                                                onClick={() => onChange(question.id, opt.value)}
-                                                className={`w-12 h-12 rounded-lg font-semibold text-sm transition-all ${
+                                                onClick={() => !readonlyFields?.[question.id] && onChange(question.id, opt.value)}
+                                                disabled={readonlyFields?.[question.id] === true}
+                                                className={`w-12 h-12 rounded-lg font-semibold text-sm transition-all disabled:cursor-not-allowed disabled:opacity-60 ${
                                                     values[question.id] === opt.value
                                                         ? 'bg-brand-500 text-white shadow-md scale-105'
                                                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300'
@@ -243,7 +262,7 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                             ) : (
                                 <div className="space-y-2">
                                     {question.options?.map((opt) => (
-                                        <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+                                        <label key={opt.value} className={`flex items-center gap-3 group ${readonlyFields?.[question.id] ? 'pointer-events-none opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
                                             <div className="relative flex items-center justify-center w-5 h-5">
                                                 <input
                                                     type="radio"
@@ -251,6 +270,7 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                                     value={opt.value}
                                                     checked={values[question.id] === opt.value}
                                                     onChange={(e) => onChange(question.id, e.target.value)}
+                                                    disabled={readonlyFields?.[question.id] === true}
                                                     className="peer appearance-none w-5 h-5 border border-gray-300 rounded-full checked:border-brand-500 checked:bg-brand-500 transition-all"
                                                 />
                                                 <div className="absolute w-2 h-2 bg-white rounded-full opacity-0 peer-checked:opacity-100 transition-opacity"></div>
@@ -271,7 +291,7 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                     const isChecked = checkboxValue.includes(opt.value);
                                     
                                     return (
-                                        <label key={opt.value} className="flex items-center gap-3 cursor-pointer group">
+                                        <label key={opt.value} className={`flex items-center gap-3 group ${readonlyFields?.[question.id] ? 'pointer-events-none opacity-60 cursor-not-allowed' : 'cursor-pointer'}`}>
                                             <div className="relative flex items-center justify-center w-5 h-5">
                                                 <input
                                                     type="checkbox"
@@ -287,6 +307,7 @@ const FormSection: React.FC<Props> = ({ section, values, errors, onChange }) => 
                                                             onChange(question.id, currentValues.filter((v: any) => v !== opt.value));
                                                         }
                                                     }}
+                                                    disabled={readonlyFields?.[question.id] === true}
                                                     className="peer appearance-none w-5 h-5 border border-gray-300 rounded checked:border-brand-500 checked:bg-brand-500 transition-all"
                                                 />
                                                 <svg className="absolute w-3 h-3 text-white opacity-0 peer-checked:opacity-100 transition-opacity pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">

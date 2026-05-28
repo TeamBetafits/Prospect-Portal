@@ -11,9 +11,10 @@ interface Props {
     isSubmitting?: boolean;
     /** Prefill from Airtable (Airtable → portal sync) */
     initialValues?: FormValues;
+    readonlyFields?: Record<string, boolean>;
 }
 
-const BenefitsPulseSurveyForm: React.FC<Props> = ({ onSave, onSubmit, isSubmitting = false, initialValues }) => {
+const BenefitsPulseSurveyForm: React.FC<Props> = ({ onSave, onSubmit, isSubmitting = false, initialValues, readonlyFields }) => {
     const [currentPage, setCurrentPage] = useState(0);
     const [values, setValues] = useState<FormValues>(initialValues || {});
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -104,6 +105,7 @@ const BenefitsPulseSurveyForm: React.FC<Props> = ({ onSave, onSubmit, isSubmitti
                             values={values}
                             errors={errors}
                             onChange={handleFieldChange}
+                            readonlyFields={readonlyFields}
                         />
                     ))}
                 </div>

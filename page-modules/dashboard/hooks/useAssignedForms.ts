@@ -16,20 +16,39 @@ export function useAssignedForms(forms: AssignedForm[]) {
     const route = getAssignedFormRoute(form);
     const isSubmitted = form.status === FormStatus.SUBMITTED || form.status === FormStatus.COMPLETED;
     const editRoute = isSubmitted && route && route !== "#" ? `${route}?edit=true` : route;
+    const isPremiumsForm =
+      form.availableFormId === "missing-premiums-manual-input" ||
+      form.name.toLowerCase().includes("missing premiums");
+
+    let ctaLabel: string;
+    if (isPremiumsForm) {
+      ctaLabel = form.status === FormStatus.NOT_STARTED
+        ? "Start"
+        : isSubmitted
+          ? "Edit Response"
+          : "Complete Task";
+    } else {
+      ctaLabel = form.status === FormStatus.NOT_STARTED
+        ? "Start Form"
+        : isSubmitted
+          ? "Edit Form"
+          : form.status === FormStatus.IN_PROGRESS
+            ? "Update"
+            : "Continue";
+    }
+
+    const description = isPremiumsForm
+      ? "Confirm or provide premium amounts for your current benefit plans."
+      : form.description;
+
     return {
       ...form,
+      description,
       displayName: cleanAssignedFormName(form),
       route: editRoute,
       isLink: route !== "#" && route !== `/forms/${form.id}` && !form.description.startsWith("?id="),
-      ctaLabel:
-        form.status === FormStatus.NOT_STARTED
-          ? "Start Form"
-          : isSubmitted
-            ? "Edit Form"
-            : form.status === FormStatus.IN_PROGRESS
-              ? "Update"
-              : "Continue",
-      isDisabled: form.status === FormStatus.COMPLETED, // Allow editing of SUBMITTED forms
+      ctaLabel,
+      isDisabled: form.status === FormStatus.COMPLETED,
     };
   });
 

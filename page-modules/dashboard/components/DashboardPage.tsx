@@ -4,19 +4,56 @@ import AssignedFormsPanel from "@/page-modules/dashboard/components/AssignedForm
 import AvailableFormsPanel from "@/page-modules/dashboard/components/AvailableFormsPanel";
 import DocumentsPanel from "@/page-modules/dashboard/components/DocumentsPanel";
 import { DashboardPageData } from "@/page-modules/dashboard/types/dashboard";
+import { AssignedForm, FormStatus, ProgressStatus, ProgressStep } from "@/types";
+
+/**
+ * Derives the effective "Current Benefits" progress step status based on the
+ * state of the assigned Plan Premiums (Missing Premiums Manual Input) form.
+ * This keeps the Current Benefits step synchronized with the premium confirmation
+ * task without requiring a separate DB write on every form status change.
+ */
+function applyPlanPremiumsToProgressSteps(
+  steps: ProgressStep[],
+  assignedForms: AssignedForm[]
+): ProgressStep[] {
+  const premiumsForm = assignedForms.find(
+    (f) =>
+      f.availableFormId === "missing-premiums-manual-input" ||
+      f.name.toLowerCase().includes("missing premiums")
+  );
+
+  if (!premiumsForm) return steps;
+
+  let effectiveStatus: ProgressStatus;
+  if (premiumsForm.status === FormStatus.COMPLETED) {
+    effectiveStatus = ProgressStatus.APPROVED;
+  } else if (premiumsForm.status === FormStatus.SUBMITTED) {
+    effectiveStatus = ProgressStatus.IN_REVIEW;
+  } else {
+    // NOT_STARTED or IN_PROGRESS — prospect action is required
+    effectiveStatus = ProgressStatus.ACTION_NEEDED;
+  }
+
+  return steps.map((step) =>
+    step.name.toLowerCase().includes("current benefits")
+      ? { ...step, status: effectiveStatus }
+      : step
+  );
+}
 
 interface Props {
   data: DashboardPageData;
 }
 
 export default function DashboardPage({ data }: Props) {
+  const effectiveSteps = applyPlanPremiumsToProgressSteps(data.progressSteps, data.assignedForms);
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <section className="w-full">
         <div className="mb-6">
           <h1 className="text-neutral-900 tracking-tight">Dashboard</h1>
         </div>
-        <ProgressSteps steps={data.progressSteps} />
+        <ProgressSteps steps={effectiveSteps} />
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

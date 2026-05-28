@@ -344,11 +344,17 @@ export async function listAssignedForms(companyId: string): Promise<AssignedForm
       }
     }
 
+    const routeFromId = templateId ? (FORM_ROUTE_BY_TEMPLATE_ID[templateId] ?? "") : "";
+    const formsUrl = available.forms_url ?? "";
+    // Prefer the portal route path over a raw Fillout embed URL (?id=...) so
+    // that isLink resolves correctly in the dashboard.
+    const description = formsUrl && !formsUrl.startsWith("?id=") ? formsUrl : (routeFromId || formsUrl);
+
     return {
       id: row.id,
       name: rowName,
       status,
-      description: available.forms_url || (templateId ? FORM_ROUTE_BY_TEMPLATE_ID[templateId] : "") || "",
+      description,
       availableFormId: templateId || row.available_form_id || undefined,
     };
   });
@@ -585,6 +591,7 @@ function mapProgressStatus(status: unknown): ProgressStatus {
   if (value.includes("approved") || value.includes("complete")) return ProgressStatus.APPROVED;
   if (value.includes("review")) return ProgressStatus.IN_REVIEW;
   if (value.includes("flag")) return ProgressStatus.FLAGGED;
+  if (value.includes("action needed")) return ProgressStatus.ACTION_NEEDED;
   if (value.includes("not requested")) return ProgressStatus.NOT_REQUESTED;
   return ProgressStatus.MISSING;
 }

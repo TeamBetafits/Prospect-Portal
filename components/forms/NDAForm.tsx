@@ -45,7 +45,7 @@ function FieldLabel({ children, required = false }) {
   );
 }
 
-function TextInput({ label, value, onChange, type = "text", required = false, error }) {
+function TextInput({ label, value, onChange, type = "text", required = false, error, disabled = false }) {
   return (
     <div className="w-full">
       <FieldLabel required={required}>{label}</FieldLabel>
@@ -53,8 +53,13 @@ function TextInput({ label, value, onChange, type = "text", required = false, er
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        className={`h-11 w-full rounded-md border bg-white px-3 text-[15px] text-slate-900 outline-none transition focus:border-[#85b84a] focus:ring-2 focus:ring-[#85b84a]/20 ${
-          error ? "border-red-300" : "border-slate-300"
+        disabled={disabled}
+        className={`h-11 w-full rounded-md border px-3 text-[15px] text-slate-900 outline-none transition ${
+          error
+            ? "border-red-300 bg-white focus:border-[#85b84a] focus:ring-2 focus:ring-[#85b84a]/20"
+            : disabled
+            ? "border-slate-200 bg-gray-50 text-gray-500 cursor-not-allowed"
+            : "border-slate-300 bg-white focus:border-[#85b84a] focus:ring-2 focus:ring-[#85b84a]/20"
         }`}
       />
       {error ? <p className="mt-1 text-sm text-red-600">{error}</p> : null}
@@ -126,7 +131,7 @@ function SelectInput({ label, value, onChange, required = false, error }) {
   );
 }
 
-export default function NDAForm({ initialValues: loadedInitialValues = {}, onSubmit, isSubmitting = false, companyId = undefined }: any) {
+export default function NDAForm({ initialValues: loadedInitialValues = {}, onSubmit, isSubmitting = false, companyId = undefined, readonlyFields = {} }: any) {
   const [values, setValues] = useState({ ...initialValues, ...loadedInitialValues });
   const [submitted, setSubmitted] = useState(false);
   const [errors, setErrors] = useState({});
@@ -283,6 +288,7 @@ export default function NDAForm({ initialValues: loadedInitialValues = {}, onSub
                 label="What is the company's full legal name?"
                 value={values.companyLegalName}
                 onChange={(value) => updateField("companyLegalName", value)}
+                disabled={readonlyFields?.companyLegalName === true}
               />
 
               <TextInput
@@ -343,24 +349,28 @@ export default function NDAForm({ initialValues: loadedInitialValues = {}, onSub
                 label="What is the Legal Name of the Entity?"
                 value={values.legalNameOfEntity}
                 onChange={(value) => updateField("legalNameOfEntity", value)}
+                disabled={readonlyFields?.legalNameOfEntity === true}
               />
 
               <TextInput
                 label="Entity Type (Corporation, LLC, etc.)"
                 value={values.entityTypeDetailed}
                 onChange={(value) => updateField("entityTypeDetailed", value)}
+                disabled={readonlyFields?.entityTypeDetailed === true}
               />
 
               <TextInput
                 label="What is the Entity State of Formation?"
                 value={values.entityStateFormationDetailed}
                 onChange={(value) => updateField("entityStateFormationDetailed", value)}
+                disabled={readonlyFields?.entityStateFormationDetailed === true}
               />
 
               <TextInput
                 label="Employer Identification Number"
                 value={values.employerIdentificationNumber}
                 onChange={(value) => updateField("employerIdentificationNumber", value)}
+                disabled={readonlyFields?.employerIdentificationNumber === true}
               />
             </motion.div>
           ) : null}
