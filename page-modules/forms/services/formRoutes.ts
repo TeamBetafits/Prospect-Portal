@@ -39,6 +39,14 @@ const FORM_ROUTE_BY_TEMPLATE_ID: Record<string, string> = {
 };
 
 export function getAssignedFormRoute(form: AssignedForm): string {
+  // Always route missing premiums to the internal React form, bypassing any DB URL
+  if (
+    form.availableFormId === "missing-premiums-manual-input" ||
+    form.name.toLowerCase().includes("missing premiums")
+  ) {
+    return "/forms/missing-premiums";
+  }
+
   if (form.availableFormId && FORM_ROUTE_BY_TEMPLATE_ID[form.availableFormId]) {
     return FORM_ROUTE_BY_TEMPLATE_ID[form.availableFormId];
   }
