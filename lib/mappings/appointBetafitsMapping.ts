@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { normalizeEin, normalizeEmail, normalizePhone as normalizeUsPhone, normalizeZip } from "@/shared/forms/formatters";
 
 function normalizeText(value) {
   if (value == null) return null;
@@ -30,8 +31,9 @@ function normalizePhone(value, countryCode) {
   const phone = normalizeText(value);
   if (!phone) return null;
 
-  const country = normalizeText(countryCode)?.toUpperCase();
-  const dial = country ? COUNTRY_DIAL_BY_CODE[country] : null;
+  const country = normalizeText(countryCode)?.toUpperCase() || "US";
+  if (country === "US" || country === "CA") return normalizeUsPhone(phone) || phone;
+  const dial = COUNTRY_DIAL_BY_CODE[country] ?? null;
   return dial ? `${dial} ${phone}` : phone;
 }
 
@@ -89,11 +91,21 @@ export function validateBorFormForMapping(form) {
 
   if (!normalizeText(form.zipPostalCode)) {
     errors.zipPostalCode = "ZIP / Postal code is required.";
+  } else if (!/^\d{5}(-\d{4})?$/.test(normalizeZip(form.zipPostalCode))) {
+    errors.zipPostalCode = "Use a 5-digit ZIP code or ZIP+4.";
+  }
+
+  if (normalizeText(form.companyEin) && !/^\d{9}$/.test(normalizeText(form.companyEin).replace(/\D/g, ""))) {
+    errors.companyEin = "Use a 9-digit EIN, for example 12-3456789.";
   }
 
   const primaryEmail = normalizeText(form.primaryContactEmail);
   if (primaryEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(primaryEmail)) {
     errors.primaryContactEmail = "Primary contact email is invalid.";
+  }
+
+  if (normalizeText(form.primaryContactPhone) && !/^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(normalizeUsPhone(form.primaryContactPhone))) {
+    errors.primaryContactPhone = "Enter a valid 10-digit US phone number.";
   }
 
   const signerAuthorized = normalizeYesNoToBool(form.primaryContactIsAuthorizedSigner);
@@ -110,6 +122,10 @@ export function validateBorFormForMapping(form) {
       errors.alternateSignerEmail = "Alternate signer email is required.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(alternateEmail)) {
       errors.alternateSignerEmail = "Alternate signer email is invalid.";
+    }
+
+    if (normalizeText(form.alternateSignerPhone) && !/^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(normalizeUsPhone(form.alternateSignerPhone))) {
+      errors.alternateSignerPhone = "Enter a valid 10-digit US phone number.";
     }
   }
 
@@ -215,12 +231,15 @@ export function mapBorFormToSupabasePayloads(form, policies = [], options = {}) 
     company_id: companyId,
     entity_legal_name: normalizeText(form.companyName),
     dba: normalizeText(form.dba),
-    ein: normalizeText(form.companyEin),
+    ein: normalizeEin(form.companyEin) || null,
     primary_contact_name: normalizeText(form.primaryContactName),
+    primary_contact_email: normalizeEmail(form.primaryContactEmail) || null,
+    primary_contact_phone: normalizePhone(form.primaryContactPhone, form.primaryContactPhoneCountry),
+    primary_contact_title: normalizeText(form.primaryContactTitle),
     primary_contact_is_bor_authorized_signer: signerAuthorized,
     alternate_bor_signer_name: signerAuthorized === false ? normalizeText(form.alternateSignerName) : null,
     alternate_bor_signer_title: signerAuthorized === false ? normalizeText(form.alternateSignerTitle) : null,
-    alternate_bor_signer_email: signerAuthorized === false ? normalizeText(form.alternateSignerEmail) : null,
+    alternate_bor_signer_email: signerAuthorized === false ? normalizeEmail(form.alternateSignerEmail) || null : null,
     alternate_bor_signer_phone:
       signerAuthorized === false
         ? normalizePhone(form.alternateSignerPhone, form.alternateSignerPhoneCountry)
@@ -239,7 +258,7 @@ export function mapBorFormToSupabasePayloads(form, policies = [], options = {}) 
     address_street: normalizeText(form.address),
     city: normalizeText(form.city),
     state: normalizeText(form.stateProvince),
-    zip_code: normalizeText(form.zipPostalCode),
+    zip_code: normalizeZip(form.zipPostalCode) || null,
     primary_location: true,
   };
 

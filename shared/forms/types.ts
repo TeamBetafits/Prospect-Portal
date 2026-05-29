@@ -13,7 +13,20 @@ export type FieldInputType =
   | "textarea"
   | "readonly";
 
-export type FieldFormat = "ein" | "phone" | "url" | "zip" | "date" | "number" | "boolean" | "array" | "text";
+export type FieldFormat =
+  | "ein"
+  | "phone"
+  | "url"
+  | "zip"
+  | "date"
+  | "number"
+  | "boolean"
+  | "array"
+  | "text"
+  | "email"
+  | "sic"
+  | "naics"
+  | "renewalMonth";
 
 export interface FieldOption {
   label: string;

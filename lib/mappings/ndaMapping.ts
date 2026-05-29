@@ -1,4 +1,5 @@
 // @ts-nocheck
+import { normalizeEin, normalizeEmail } from "@/shared/forms/formatters";
 
 function normalizeText(value) {
   if (value == null) return null;
@@ -47,6 +48,11 @@ export function validateNdaFormForMapping(form) {
     errors.userIsNdaSigner = "Choose Yes or No.";
   }
 
+  const ein = normalizeText(form.employerIdentificationNumber);
+  if (ein && !/^\d{9}$/.test(ein.replace(/\D/g, ""))) {
+    errors.employerIdentificationNumber = "Use a 9-digit EIN, for example 12-3456789.";
+  }
+
   const userIsNdaSigner = normalizeYesNoToBool(form.userIsNdaSigner);
   if (ndaRequested === true && userIsNdaSigner === false) {
     if (!normalizeText(form.ndaSignerName)) errors.ndaSignerName = "Enter the signer name.";
@@ -89,11 +95,11 @@ export function mapNdaFormToSupabasePayloads(form, options = {}) {
         userIsNdaSigner: normalizeText(form.userIsNdaSigner),
         ndaSignerName: normalizeText(form.ndaSignerName),
         ndaSignerTitle: normalizeText(form.ndaSignerTitle),
-        ndaSignerEmail: normalizeText(form.ndaSignerEmail),
+        ndaSignerEmail: normalizeEmail(form.ndaSignerEmail) || null,
         legalNameOfEntity: normalizeText(form.legalNameOfEntity),
         entityTypeDetailed: normalizeText(form.entityTypeDetailed),
         entityStateFormationDetailed: normalizeText(form.entityStateFormationDetailed),
-        employerIdentificationNumber: normalizeText(form.employerIdentificationNumber),
+        employerIdentificationNumber: normalizeEin(form.employerIdentificationNumber) || null,
         benefitStartMonth: normalizeText(form.benefitStartMonth),
       },
     },
@@ -104,7 +110,7 @@ export function mapNdaFormToSupabasePayloads(form, options = {}) {
         company_id: options.companyId ?? null,
         envelope_id: options.envelopeId ?? null,
         signer_name: normalizeText(form.ndaSignerName),
-        signer_email: normalizeText(form.ndaSignerEmail),
+        signer_email: normalizeEmail(form.ndaSignerEmail) || null,
         signer_title: normalizeText(form.ndaSignerTitle),
       }
     : null;
@@ -120,7 +126,7 @@ export function mapNdaFormToSupabasePayloads(form, options = {}) {
     entity_legal_name: legalEntityName,
     state_of_formation: firstNonEmpty(form.entityStateFormation, form.entityStateFormationDetailed),
     entity_type: firstNonEmpty(form.entityType, form.entityTypeDetailed),
-    ein: normalizeText(form.employerIdentificationNumber),
+    ein: normalizeEin(form.employerIdentificationNumber) || null,
   };
 
   const entities = hasEntityFields(entitiesCandidate) ? entitiesCandidate : null;

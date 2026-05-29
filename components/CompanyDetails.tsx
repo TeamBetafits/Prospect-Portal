@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import EmptyState from "./EmptyState";
 import { CompanyData } from "../types";
 import { FieldGroupRenderer } from "@/shared/forms/FieldRenderer";
-import { getChangedFields, validateFieldValue } from "@/shared/forms/formatters";
+import { getChangedFields, normalizeDraft, validateFieldValue } from "@/shared/forms/formatters";
 import {
   ProspectCompanyDraft,
   companyDataToDraft,
@@ -103,22 +103,23 @@ const CompanyDetails: React.FC<Props> = ({ data }) => {
     setSaveSuccess(false);
 
     try {
-      const nextCompany = draftToCompanyData(company, draft);
+      const normalizedDraft = normalizeDraft(prospectCompanyFields, draft) as ProspectCompanyDraft;
+      const nextCompany = draftToCompanyData(company, normalizedDraft);
       const updatePayload = {
-        name: draft.name,
-        entityType: draft.entityType,
-        legalName: draft.legalName,
-        ein: draft.ein,
-        sicCode: draft.sicCode,
-        naicsCode: draft.naicsCode,
-        address: draft.address,
-        renewalMonth: draft.renewalMonth,
+        name: normalizedDraft.name,
+        entityType: normalizedDraft.entityType,
+        legalName: normalizedDraft.legalName,
+        ein: normalizedDraft.ein,
+        sicCode: normalizedDraft.sicCode,
+        naicsCode: normalizedDraft.naicsCode,
+        address: normalizedDraft.address,
+        renewalMonth: normalizedDraft.renewalMonth,
         contact: {
-          firstName: draft.firstName,
-          lastName: draft.lastName,
-          jobTitle: draft.jobTitle,
-          phone: draft.phone,
-          email: draft.email,
+          firstName: normalizedDraft.firstName,
+          lastName: normalizedDraft.lastName,
+          jobTitle: normalizedDraft.jobTitle,
+          phone: normalizedDraft.phone,
+          email: normalizedDraft.email,
         },
       };
       const response = await fetch("/api/company/update", {

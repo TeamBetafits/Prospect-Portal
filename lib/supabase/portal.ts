@@ -1,4 +1,6 @@
 import { supabaseAdmin, supabaseClient } from "@/lib/supabaseClient";
+import { normalizePatch, validateFieldValue } from "@/shared/forms/formatters";
+import type { FieldDefinition } from "@/shared/forms/types";
 import {
   AssignedForm,
   AvailableForm,
@@ -19,6 +21,55 @@ import {
 } from "@/types";
 
 type Json = Record<string, unknown>;
+
+const companyStandardFields: Array<Pick<FieldDefinition, "key" | "label" | "type" | "format">> = [
+  { key: "website", label: "Website", type: "url", format: "url" },
+  { key: "sic_code", label: "SIC Code", type: "text", format: "sic" },
+  { key: "naics_code", label: "NAICS Code", type: "text", format: "naics" },
+];
+
+const entityStandardFields: Array<Pick<FieldDefinition, "key" | "label" | "type" | "format">> = [
+  { key: "ein", label: "EIN", type: "text", format: "ein" },
+  { key: "primary_contact_email", label: "Primary Contact Email", type: "email", format: "email" },
+  { key: "primary_contact_phone", label: "Primary Contact Phone", type: "phone", format: "phone" },
+  { key: "alternate_bor_signer_email", label: "Alternate Signer Email", type: "email", format: "email" },
+  { key: "alternate_bor_signer_phone", label: "Alternate Signer Phone", type: "phone", format: "phone" },
+];
+
+const contactStandardFields: Array<Pick<FieldDefinition, "key" | "label" | "type" | "format">> = [
+  { key: "email", label: "Email", type: "email", format: "email" },
+  { key: "phone", label: "Phone", type: "phone", format: "phone" },
+];
+
+const locationStandardFields: Array<Pick<FieldDefinition, "key" | "label" | "type" | "format">> = [
+  { key: "zip_code", label: "ZIP Code", type: "text", format: "zip" },
+];
+
+const policyStandardFields: Array<Pick<FieldDefinition, "key" | "label" | "type" | "format">> = [
+  { key: "renewal_month", label: "Renewal Month", type: "number", format: "renewalMonth" },
+];
+
+function getStandardFields(table: string): Array<Pick<FieldDefinition, "key" | "label" | "type" | "format">> {
+  if (table === "companies") return companyStandardFields;
+  if (table === "entities") return entityStandardFields;
+  if (table === "contacts") return contactStandardFields;
+  if (table === "locations") return locationStandardFields;
+  if (table === "policy_or_admin_configurations") return policyStandardFields;
+  return [];
+}
+
+function normalizeTablePatch(table: string, patch: Json): Json {
+  const fields = getStandardFields(table);
+  if (!fields.length) return patch;
+
+  const normalized = normalizePatch(fields as FieldDefinition[], patch) as Json;
+  for (const field of fields) {
+    if (normalized[field.key] === undefined || normalized[field.key] === null || normalized[field.key] === "") continue;
+    const message = validateFieldValue(field as FieldDefinition, normalized[field.key]);
+    if (message) throw new Error(`${table}.${field.key}: ${message}`);
+  }
+  return normalized;
+}
 
 export interface PortalUserProfile {
   id: string;
@@ -686,8 +737,9 @@ export async function updateCompanyData(companyId: string, body: Json): Promise<
     naics_code: pick(body, "naicsCode"),
     updated_at: new Date().toISOString(),
   });
-  if (Object.keys(companyPatch).length > 1) {
-    const { error } = await supabaseAdmin.from("companies").update(companyPatch).eq("id", companyId);
+  const normalizedCompanyPatch = normalizeTablePatch("companies", companyPatch);
+  if (Object.keys(normalizedCompanyPatch).length > 1) {
+    const { error } = await supabaseAdmin.from("companies").update(normalizedCompanyPatch).eq("id", companyId);
     if (error) throw error;
   }
 
@@ -720,7 +772,7 @@ export async function updateCompanyData(companyId: string, body: Json): Promise<
 
 async function upsertSingleton(table: string, companyId: string, patch: Json): Promise<string | null> {
   const timestampPatch = table === "other_questions" ? patch : { ...patch, updated_at: new Date().toISOString() };
-  const cleaned = cleanObject(timestampPatch);
+  const cleaned = normalizeTablePatch(table, cleanObject(timestampPatch));
   if (Object.keys(cleaned).length <= 1) return null;
 
   const existing = await maybeSingle<any>(
@@ -814,10 +866,11 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
     naics_code: pick(values, "preferredNaicsCode", "naicsCode", QUICK_START_IDS.naicsCode),
     updated_at: new Date().toISOString(),
   });
-  if (Object.keys(companyPatch).length > 1) {
-    const { error } = await supabaseAdmin.from("companies").update(companyPatch).eq("id", companyId);
+  const normalizedCompanyPatch = normalizeTablePatch("companies", companyPatch);
+  if (Object.keys(normalizedCompanyPatch).length > 1) {
+    const { error } = await supabaseAdmin.from("companies").update(normalizedCompanyPatch).eq("id", companyId);
     if (error) throw error;
-    targets.companies = Object.keys(companyPatch);
+    targets.companies = Object.keys(normalizedCompanyPatch);
   }
 
   const contactId = await upsertContactFromForm(companyId, values);
@@ -875,7 +928,7 @@ async function applyMappedPayloads(companyId: string, mappedPayloads: Json): Pro
   const targets: Json = {};
   const companyPayload = mappedPayloads.companies;
   if (companyPayload && typeof companyPayload === "object") {
-    const patch = cleanObject({ ...(companyPayload as Json), id: undefined, updated_at: new Date().toISOString() });
+    const patch = normalizeTablePatch("companies", cleanObject({ ...(companyPayload as Json), id: undefined, updated_at: new Date().toISOString() }));
     if (Object.keys(patch).length) {
       const { error } = await supabaseAdmin.from("companies").update(patch).eq("id", companyId);
       if (error) throw error;

@@ -2,7 +2,7 @@
 "use client";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { mapBorFormToSupabasePayloads } from "@/lib/mappings/appointBetafitsMapping";
+import { mapBorFormToSupabasePayloads, validateBorFormForMapping } from "@/lib/mappings/appointBetafitsMapping";
 
 function CalendarIcon({ className = "h-5 w-5" }) {
   return (
@@ -641,6 +641,10 @@ export default function AppointBetafitsForm({ initialValues = {}, onSubmit, isSu
 
     setIsSaving(true);
     try {
+      const validation = validateBorFormForMapping(form);
+      if (!validation.isValid) {
+        throw new Error(Object.values(validation.errors)[0] || "Please fix the highlighted fields.");
+      }
       const mappedPayloads = mapBorFormToSupabasePayloads(form, policies, {
         companyId: companyId ?? "00000000-0000-0000-0000-000000000000",
       });

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { formatFieldValue, normalizeDateInput } from "./formatters";
+import { formatFieldValue, normalizeDateInput, normalizeFieldValue } from "./formatters";
 import type { FieldRendererProps } from "./types";
 
 const inputClassName =
@@ -30,6 +30,7 @@ export function FieldRenderer<TRecord extends Record<string, unknown> = Record<s
   }
 
   const handleChange = (nextValue: unknown) => onChange?.(field.key, nextValue);
+  const handleBlur = () => onChange?.(field.key, normalizeFieldValue(field, value));
 
   return (
     <label htmlFor={fieldId} className="block space-y-2 text-[13px] font-semibold text-neutral-700">
@@ -42,6 +43,7 @@ export function FieldRenderer<TRecord extends Record<string, unknown> = Record<s
           id={fieldId}
           value={String(value ?? "")}
           onChange={(event) => handleChange(event.target.value)}
+          onBlur={handleBlur}
           disabled={disabled}
           rows={3}
           className={`${inputClassName} h-auto py-2`}
@@ -51,6 +53,7 @@ export function FieldRenderer<TRecord extends Record<string, unknown> = Record<s
           id={fieldId}
           value={String(value ?? "")}
           onChange={(event) => handleChange(event.target.value)}
+          onBlur={handleBlur}
           disabled={disabled}
           className={inputClassName}
         >

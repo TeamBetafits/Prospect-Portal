@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { mapNdaFormToSupabasePayloads } from "@/lib/mappings/ndaMapping";
+import { normalizeEin, normalizeEmail } from "@/shared/forms/formatters";
 
 const months = [
   "January 1",
@@ -220,6 +221,10 @@ export default function NDAForm({ initialValues: loadedInitialValues = {}, onSub
       }
     }
 
+    if (values.employerIdentificationNumber && !/^\d{9}$/.test(String(values.employerIdentificationNumber).replace(/\D/g, ""))) {
+      nextErrors.employerIdentificationNumber = "Use a 9-digit EIN, for example 12-3456789.";
+    }
+
     setErrors(nextErrors);
     return Object.keys(nextErrors).length === 0;
   }
@@ -228,15 +233,21 @@ export default function NDAForm({ initialValues: loadedInitialValues = {}, onSub
     event.preventDefault();
     if (!validate()) return;
 
-    const mappedPayloads = mapNdaFormToSupabasePayloads(visibleValues, {
+    const normalizedVisibleValues = {
+      ...visibleValues,
+      ndaSignerEmail: normalizeEmail(visibleValues.ndaSignerEmail),
+      employerIdentificationNumber: normalizeEin(visibleValues.employerIdentificationNumber),
+    };
+
+    const mappedPayloads = mapNdaFormToSupabasePayloads(normalizedVisibleValues, {
       companyId: companyId ?? "00000000-0000-0000-0000-000000000000",
     });
 
-    console.log("Submitted NDA intake", visibleValues);
+    console.log("Submitted NDA intake", normalizedVisibleValues);
     console.log("Mapped NDA payloads", mappedPayloads);
 
     try {
-      await onSubmit(visibleValues, mappedPayloads);
+      await onSubmit(normalizedVisibleValues, mappedPayloads);
       setSubmitted(true);
     } catch (error) {
       console.error("[NDAForm] Submit failed", error);
@@ -371,6 +382,7 @@ export default function NDAForm({ initialValues: loadedInitialValues = {}, onSub
                 value={values.employerIdentificationNumber}
                 onChange={(value) => updateField("employerIdentificationNumber", value)}
                 disabled={readonlyFields?.employerIdentificationNumber === true}
+                error={errors.employerIdentificationNumber}
               />
             </motion.div>
           ) : null}
