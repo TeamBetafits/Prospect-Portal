@@ -11,18 +11,29 @@ import { AssignedForm, FormStatus, ProgressStatus, ProgressStep } from "@/types"
  * state of the assigned Plan Premiums (Missing Premiums Manual Input) form.
  * This keeps the Current Benefits step synchronized with the premium confirmation
  * task without requiring a separate DB write on every form status change.
+ *
+ * Also filters out the internal "Missing Premiums" and "Missing Premiums Manual Input"
+ * orchestration steps — these must never appear by those names in the prospect view.
+ * Their status is already reflected through the "Current Benefits" step.
  */
 function applyPlanPremiumsToProgressSteps(
   steps: ProgressStep[],
   assignedForms: AssignedForm[]
 ): ProgressStep[] {
+  // Remove internal orchestration steps from the prospect-facing table
+  const HIDDEN_STEP_PATTERNS = ["missing premiums"];
+  const filtered = steps.filter(
+    (step) => !HIDDEN_STEP_PATTERNS.some((p) => step.name.toLowerCase().includes(p))
+  );
+
   const premiumsForm = assignedForms.find(
     (f) =>
       f.availableFormId === "missing-premiums-manual-input" ||
-      f.name.toLowerCase().includes("missing premiums")
+      f.name.toLowerCase().includes("missing premiums") ||
+      f.name.toLowerCase().includes("confirm plan premiums")
   );
 
-  if (!premiumsForm) return steps;
+  if (!premiumsForm) return filtered;
 
   let effectiveStatus: ProgressStatus;
   if (premiumsForm.status === FormStatus.COMPLETED) {
@@ -34,7 +45,7 @@ function applyPlanPremiumsToProgressSteps(
     effectiveStatus = ProgressStatus.ACTION_NEEDED;
   }
 
-  return steps.map((step) =>
+  return filtered.map((step) =>
     step.name.toLowerCase().includes("current benefits")
       ? { ...step, status: effectiveStatus }
       : step

@@ -7,6 +7,10 @@ import {
     verifySupabaseOtpToken,
 } from "@/lib/supabase/portal";
 
+const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim() || "";
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim() || "";
+const includeGoogleProvider = !!googleClientId && !!googleClientSecret;
+
 function toNextAuthUser(profile: Awaited<ReturnType<typeof getUserProfileByEmail>>) {
     if (!profile) return null;
     return {
@@ -22,10 +26,14 @@ function toNextAuthUser(profile: Awaited<ReturnType<typeof getUserProfileByEmail
 
 export const authOptions: NextAuthOptions = {
     providers: [
-        GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID || "",
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-        }),
+        ...(includeGoogleProvider
+            ? [
+                GoogleProvider({
+                    clientId: googleClientId,
+                    clientSecret: googleClientSecret,
+                }),
+            ]
+            : []),
         CredentialsProvider({
             name: "Credentials",
             credentials: {

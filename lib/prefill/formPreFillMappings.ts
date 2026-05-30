@@ -53,25 +53,30 @@ function compile(entries: FieldMappingEntry[]): CompiledFormMapping {
 // ─── Field entry arrays ───────────────────────────────────────────────────────
 
 /**
- * Quick Start (Fillout-based) — initial onboarding intake; all fields editable
- * by the client so they can correct any pre-populated values.
+ * Quick Start (current React multi-step form) — initial onboarding intake;
+ * all fields editable by the client so they can confirm or correct pre-filled
+ * values.
  */
 const QUICK_START_FILLOUT_ENTRIES: FieldMappingEntry[] = [
-  { sourceField: "First Name",                    targetField: "qYvbJrrJqLQjqQnVip6c3N", editableBy: "Client" },
-  { sourceField: "Last Name",                     targetField: "3khn37NbHQYb7CN6NPgrx2", editableBy: "Client" },
-  { sourceField: "Job Title",                     targetField: "2d65uNNeKNqSmZT1k2WVRq", editableBy: "Client" },
-  { sourceField: "Phone Number",                  targetField: "jZa7ip7oU533vM2qLWCkZj", editableBy: "Client" },
-  { sourceField: "Work Email",                    targetField: "ckkAfnKZoQag2Kqf7j71Cq", editableBy: "Client" },
-  { sourceField: "Company Name",                  targetField: "2UCyRd53bWrtdKXAK1XMy6", editableBy: "Client" },
-  { sourceField: "Street Address",                targetField: "ayXo",                   editableBy: "Client" },
-  { sourceField: "City",                          targetField: "fT94",                   editableBy: "Client" },
-  { sourceField: "State / Province",              targetField: "hmTa",                   editableBy: "Client" },
-  { sourceField: "ZIP Code",                      targetField: "wLev",                   editableBy: "Client" },
-  { sourceField: "EIN",                           targetField: "uTuDTocoypgCbQCkcHWUXN", editableBy: "Client" },
-  { sourceField: "Preferred SIC Code",            targetField: "hf2rRXr8RmGS1o5PFoFJJn", editableBy: "Client" },
-  { sourceField: "Preferred NAICS Code",          targetField: "xfBVQncwKZoTzx4FDeHDLR", editableBy: "Client" },
-  { sourceField: "Estimated Medical Enrolled EEs", targetField: "87fD37dczxpgzodHMWgvWT", editableBy: "Client" },
-  { sourceField: "Estimated Benefit Eligible EEs", targetField: "onbhhvHYbup9VUBE6eAAaz", editableBy: "Client" },
+  { sourceField: "First Name",                     targetField: "firstName", editableBy: "Client" },
+  { sourceField: "Last Name",                      targetField: "lastName", editableBy: "Client" },
+  { sourceField: "Job Title",                      targetField: "title", editableBy: "Client" },
+  { sourceField: "Phone Number",                   targetField: "phone", editableBy: "Client" },
+  { sourceField: "Work Email",                     targetField: "email", editableBy: "Client" },
+  { sourceField: "Company Name",                   targetField: "companyName", editableBy: "Client" },
+  { sourceField: "Street Address",                 targetField: "address", editableBy: "Client" },
+  { sourceField: "City",                           targetField: "city", editableBy: "Client" },
+  { sourceField: "State / Province",               targetField: "stateProvince", editableBy: "Client" },
+  { sourceField: "ZIP Code",                       targetField: "zipCode", editableBy: "Client" },
+  { sourceField: "Year Company Founded",           targetField: "yearCompanyFounded", editableBy: "Client" },
+  { sourceField: "EIN",                            targetField: "ein", editableBy: "Client" },
+  { sourceField: "Preferred SIC Code",             targetField: "preferredSicCode", editableBy: "Client" },
+  { sourceField: "Preferred NAICS Code",           targetField: "preferredNaicsCode", editableBy: "Client" },
+  { sourceField: "Benefit-Eligible US Employees Range", targetField: "benefitEligibleEmployees", editableBy: "Client" },
+  { sourceField: "Estimated Medical Enrolled EEs", targetField: "estimatedMedicalEnrolledEes", editableBy: "Client" },
+  { sourceField: "Estimated Benefit Eligible EEs", targetField: "estimatedBenefitEligibleEes", editableBy: "Client" },
+  { sourceField: "Expected Headcount Growth (next 12 months)", targetField: "expectedHeadcountGrowth", editableBy: "Client" },
+  { sourceField: "NDA Required", targetField: "ndaRequested", editableBy: "Client" },
 ];
 
 /**

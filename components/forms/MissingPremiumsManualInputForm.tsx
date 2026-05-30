@@ -126,7 +126,6 @@ export default function MissingPremiumsManualInputForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
-  const [submittedPayload, setSubmittedPayload] = useState<object | null>(null);
 
   const groupedRows = useMemo(() => groupRows(rows), [rows]);
 
@@ -193,14 +192,6 @@ export default function MissingPremiumsManualInputForm() {
         throw new Error(body?.error ?? "Failed to submit. Please try again.");
       }
 
-      setSubmittedPayload({
-        form_type: "Missing Premiums Manual Input",
-        submission_id: body.submissionId,
-        tiers_and_rates_updates: updates,
-        supporting_documents: files.map((f) => ({ name: f.name, size: f.size, type: f.type })),
-        notes: notes || null,
-      });
-
       setSubmitted(true);
     } catch (err: any) {
       console.error("[MissingPremiumsManualInputForm] Submit error:", err);
@@ -225,12 +216,6 @@ export default function MissingPremiumsManualInputForm() {
                 the values before they are applied and the calculation is re-run.
               </p>
             </div>
-          </div>
-          <div className="mt-6 rounded-xl bg-slate-950 p-4 text-sm text-white">
-            <p className="mb-2 font-semibold">Payload preview</p>
-            <pre className="max-h-96 overflow-auto whitespace-pre-wrap text-xs leading-5">
-              {JSON.stringify(submittedPayload, null, 2)}
-            </pre>
           </div>
         </div>
       </div>

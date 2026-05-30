@@ -54,6 +54,25 @@ export async function POST(request: NextRequest) {
 
     const companyPlanIds = companyPlans.map((p: { id: string }) => p.id);
 
+    const { data: availableFormRows, error: availableFormError } = await supabaseAdmin
+      .from("intake_available_forms")
+      .select("id, airtable_id, display_name")
+      .or(
+        "airtable_id.eq.missing-premiums-manual-input,display_name.ilike.%Missing Premiums%,display_name.ilike.%Confirm Plan Premiums%"
+      )
+      .limit(10);
+
+    if (availableFormError) {
+      console.error("[missing-premiums/approve] Available form lookup error:", availableFormError);
+    }
+
+    const missingPremiumsAvailableFormId =
+      availableFormRows?.find((row: { id: string; airtable_id: string | null; display_name: string | null }) =>
+        row.airtable_id === "missing-premiums-manual-input" ||
+        String(row.display_name || "").toLowerCase().includes("missing premiums") ||
+        String(row.display_name || "").toLowerCase().includes("confirm plan premiums")
+      )?.id || null;
+
     if (companyPlanIds.length === 0) {
       return NextResponse.json({ error: "No plans found for this company" }, { status: 404 });
     }
@@ -127,11 +146,22 @@ export async function POST(request: NextRequest) {
 
     // Mark the assigned form row as Completed so the portal and orchestration
     // engine both see the form is fully resolved.
-    await supabaseAdmin
+    let assignedQuery = supabaseAdmin
       .from("intake_assigned_forms")
-      .update({ status: "Completed", submitted: true, updated_at: now })
-      .eq("company_id", companyId)
-      .ilike("name", MANUAL_INPUT_STEP);
+      .update({ status: "Completed", submitted: true, assigned: true, updated_at: now })
+      .eq("company_id", companyId);
+
+    if (missingPremiumsAvailableFormId) {
+      assignedQuery = assignedQuery.eq("available_form_id", missingPremiumsAvailableFormId);
+    } else {
+      assignedQuery = assignedQuery.or(
+        "name.ilike.%Missing Premiums%," +
+          "name.ilike.%Missing Premiums Manual Input%," +
+          "name.ilike.%Confirm Plan Premiums%"
+      );
+    }
+
+    await assignedQuery;
 
     const allOk = results.every((r) => r.ok);
     return NextResponse.json({ success: allOk, results }, { status: allOk ? 200 : 207 });

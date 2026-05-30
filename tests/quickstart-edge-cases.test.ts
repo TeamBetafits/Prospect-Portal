@@ -457,8 +457,8 @@ describe("companies payload — field coverage", () => {
     assert.equal(co({}).updated_at, NOW);
   });
 
-  it("customer_status is always 'quick_start_submitted' regardless of other inputs", () => {
-    assert.equal(co({ companyName: null }).customer_status, "quick_start_submitted");
+  it("customer_status is always 'Prospect' regardless of other inputs", () => {
+    assert.equal(co({ companyName: null }).customer_status, "Prospect");
   });
 });
 
@@ -756,7 +756,7 @@ describe("combined integration scenarios", () => {
       OPTS
     );
 
-    assert.equal(r.companies.customer_status, "quick_start_submitted");
+    assert.equal(r.companies.customer_status, "Prospect");
     assert.equal(r.companies.sic_code, "6311");
     assert.equal(r.medical_plans.plan_type, "PPO");
     assert.equal(r.medical_plans.metallic_level, "Gold");
@@ -775,7 +775,7 @@ describe("combined integration scenarios", () => {
 
   it("minimal submission with no optional fields maps without errors", () => {
     const r = mapQuickStartFormToSupabasePayloads(BASE, OPTS);
-    assert.equal(r.companies.customer_status, "quick_start_submitted");
+    assert.equal(r.companies.customer_status, "Prospect");
     assert.equal(r.medical_plans, null);
     assert.equal(r.dental_plans, null);
     assert.equal(r.vision_plans, null);

@@ -13,6 +13,7 @@ export async function POST(request: NextRequest) {
         if (!session?.user?.email) {
             return NextResponse.json({ error: "Unauthorized - Please log in" }, { status: 401 });
         }
+        const uploaderEmail = session.user.email;
 
         const companyId = await getCompanyId();
         if (!companyId) {
@@ -49,7 +50,7 @@ export async function POST(request: NextRequest) {
                 file_url: fileUrl,
                 metadata: {
                     title: documentTitle,
-                    uploadedByEmail: session.user.email,
+                    uploadedByEmail: uploaderEmail,
                     storagePath: upload.path,
                     contentType: file.type,
                     size: file.size,

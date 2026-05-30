@@ -70,6 +70,25 @@ export async function POST(request: NextRequest) {
 
     const companyPlanIds = companyPlans.map((p: { id: string }) => p.id);
 
+    const { data: availableFormRows, error: availableFormError } = await supabaseAdmin
+      .from("intake_available_forms")
+      .select("id, airtable_id, display_name")
+      .or(
+        "airtable_id.eq.missing-premiums-manual-input,display_name.ilike.%Missing Premiums%,display_name.ilike.%Confirm Plan Premiums%"
+      )
+      .limit(10);
+
+    if (availableFormError) {
+      console.error("[missing-premiums/submit] Available form lookup error:", availableFormError);
+    }
+
+    const missingPremiumsAvailableFormId =
+      availableFormRows?.find((row: { id: string; airtable_id: string | null; display_name: string | null }) =>
+        row.airtable_id === "missing-premiums-manual-input" ||
+        String(row.display_name || "").toLowerCase().includes("missing premiums") ||
+        String(row.display_name || "").toLowerCase().includes("confirm plan premiums")
+      )?.id || null;
+
     // Write _user fields to tiers_and_rates — these are the staging columns.
     // Main premium fields (premium_ee, etc.) are not touched until admin approves.
     const results: { id: string; ok: boolean; error?: string }[] = [];
@@ -110,14 +129,59 @@ export async function POST(request: NextRequest) {
 
     await upsertProgressStep(companyId, MANUAL_INPUT_STEP, "Pending Approval", stepNotes);
 
-    // Mark the orchestration-assigned form row as Submitted so the portal
-    // reflects the correct status and the orchestration engine can track completion.
+    // Mark the assigned form row as Submitted so dashboard/admin status mirrors
+    // Quick Start behavior (Submitted + timestamps). Use broad matching because
+    // historical rows may use different names/IDs.
     const now = new Date().toISOString();
-    await supabaseAdmin
-      .from("intake_assigned_forms")
-      .update({ status: "Submitted", submitted: true, updated_at: now })
-      .eq("company_id", companyId)
-      .ilike("name", MANUAL_INPUT_STEP);
+    const today = now.split("T")[0];
+    const assignedFormPatch = {
+      status: "Submitted",
+      submitted: true,
+      assigned: true,
+      first_submitted: today,
+      last_updated: today,
+      updated_at: now,
+    };
+
+    let assignedQuery = supabaseAdmin.from("intake_assigned_forms").update(assignedFormPatch).eq("company_id", companyId);
+
+    if (missingPremiumsAvailableFormId) {
+      assignedQuery = assignedQuery.eq("available_form_id", missingPremiumsAvailableFormId);
+    } else {
+      assignedQuery = assignedQuery.or(
+        "name.ilike.%Missing Premiums%," +
+          "name.ilike.%Missing Premiums Manual Input%," +
+          "name.ilike.%Confirm Plan Premiums%"
+      );
+    }
+
+    const { data: updatedAssignedRows, error: assignedUpdateError } = await assignedQuery.select("id");
+
+    if (assignedUpdateError) {
+      console.error("[missing-premiums/submit] Assigned form update error:", assignedUpdateError);
+    }
+
+    // If no existing assignment row matched, create one so status is not stuck at
+    // Unassigned / Not Started in portal/admin views.
+    if (!updatedAssignedRows || updatedAssignedRows.length === 0) {
+      if (!missingPremiumsAvailableFormId) {
+        console.warn("[missing-premiums/submit] Could not resolve Missing Premiums available form id; skipping fallback insert.");
+      } else {
+      const { error: assignedInsertError } = await supabaseAdmin
+        .from("intake_assigned_forms")
+        .insert({
+          company_id: companyId,
+          available_form_id: missingPremiumsAvailableFormId,
+          name: "Confirm Plan Premiums",
+          created_time: now,
+          ...assignedFormPatch,
+        });
+
+      if (assignedInsertError) {
+        console.error("[missing-premiums/submit] Assigned form insert error:", assignedInsertError);
+      }
+      }
+    }
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

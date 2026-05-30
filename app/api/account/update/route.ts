@@ -8,12 +8,14 @@ export const dynamic = 'force-dynamic';
 export async function PATCH(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         const { name } = await request.json();
         if (!name || !name.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
-        const userId = (session.user as any).id;
+        const userId = (session?.user as any)?.id;
         if (!userId) return NextResponse.json({ error: 'User ID not found' }, { status: 400 });
 
         const nameParts = name.trim().split(/\s+/);

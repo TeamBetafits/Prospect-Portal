@@ -193,6 +193,7 @@ function ReviewSection({ fields, values, onEdit }: any) {
   return <section className="border-t border-zinc-200 pt-5"><div className="mb-4 flex justify-end"><button onClick={onEdit} className="text-blue-600 hover:underline">Edit</button></div><div className="space-y-5">{fields.map((f: any) => <div key={f.label} className="grid grid-cols-[1.2fr_1fr] gap-6 text-[15px] max-md:grid-cols-1 max-md:gap-1"><div className="text-zinc-500">{f.label}</div><div className={fmt(values[f.key]) === "Unanswered" ? "italic text-zinc-300" : "text-zinc-700"}>{fmt(values[f.key])}</div></div>)}</div></section>;
 }
 
+
 function ReviewPage({ v, edit, submit, isSubmitting }: any) {
   const company = ["firstName","lastName","title","phone","email","companyName","address","city","stateProvince","zipCode","ein","yearCompanyFounded","preferredSicCode","preferredNaicsCode","benefitEligibleEmployees","estimatedBenefitEligibleEes","estimatedMedicalEnrolledEes","expectedHeadcountGrowth","ndaRequested","ndaCompanyLegalName","entityType","stateOfFormation","ndaSigner"].map((k) => ({ key:k, label:reviewLabel(k) }));
   const benefits = ["benefitsOffered","benefitsOtherText","medicalBenefitOfferType","medicalBenefitOfferTypeOther","medicalContributionStrategy","contributionToEmployee","contributionToDependents","percentageAppliesOnlyBasePlan","contributionStrategyDescription","usesPeo","peoUsed","peosEvaluated","payrollProvider","payrollFrequency","benefitDeductionFrequency","companyPackageConditions","companyPackageConditionsDetails"].map((k) => ({ key:k, label:reviewLabel(k) }));

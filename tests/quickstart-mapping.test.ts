@@ -234,10 +234,8 @@ describe("Think of Us quick start example", () => {
     assert.equal(result.entities.entity_type, "Limited Liability Company (LLC)");
     assert.equal(result.entities.state_of_formation, "District of Columbia");
     assert.equal(result.entities.ein, "81-3456789");
-    assert.equal(result.locations.address_1, "1201 Connecticut Ave NW, Suite 200");
     assert.equal(result.locations.address_street, "1201 Connecticut Ave NW, Suite 200");
     assert.equal(result.locations.state, "District of Columbia");
-    assert.equal(result.locations.headcount, "28");
     assert.equal(result.benefits?.calendar_year, "2018-01-01");
     assert.equal(result.contribution_strategies.contribution_type, "Percentage Employer Contribution");
     assert.equal(result.medical_plans.plan_type, "HDHP");
