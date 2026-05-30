@@ -13,12 +13,6 @@ export async function getCompanyId(): Promise<string | null> {
         const session = await getServerSession(authOptions);
 
         if (!session?.user) {
-            // For development/testing: use env variable if set
-            const envCompanyId = process.env.DEFAULT_COMPANY_ID;
-            if (envCompanyId) {
-                console.warn('[getCompanyId] No session found, using DEFAULT_COMPANY_ID from env');
-                return envCompanyId;
-            }
             return null;
         }
 

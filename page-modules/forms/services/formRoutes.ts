@@ -42,7 +42,8 @@ export function getAssignedFormRoute(form: AssignedForm): string {
   // Always route missing premiums to the internal React form, bypassing any DB URL
   if (
     form.availableFormId === "missing-premiums-manual-input" ||
-    form.name.toLowerCase().includes("missing premiums")
+    form.name.toLowerCase().includes("missing premiums") ||
+    form.name.toLowerCase().includes("confirm plan premiums")
   ) {
     return "/forms/missing-premiums";
   }
@@ -103,7 +104,8 @@ export function cleanAssignedFormName(form: AssignedForm): string {
   // Prospect-facing rename: never expose "Missing Premiums" label
   if (
     form.availableFormId === "missing-premiums-manual-input" ||
-    displayName.toLowerCase().includes("missing premiums")
+    displayName.toLowerCase().includes("missing premiums") ||
+    displayName.toLowerCase().includes("confirm plan premiums")
   ) {
     return "Confirm Plan Premiums";
   }

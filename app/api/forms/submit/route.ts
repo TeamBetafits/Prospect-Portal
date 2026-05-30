@@ -9,7 +9,9 @@ import { submitPortalForm } from '@/lib/supabase/portal';
 export async function POST(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!session?.user?.email) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         const companyId = await getCompanyId();
         if (!companyId) {
@@ -45,6 +47,11 @@ export async function POST(request: NextRequest) {
         });
     } catch (error: any) {
         console.error('[Form Submit] Error:', error);
+        const message = String(error?.message || '');
+        const isValidationError = /^(companies|contacts|entities|users|locations|policy_or_admin_configurations)\./.test(message);
+        if (isValidationError) {
+            return NextResponse.json({ success: false, error: message }, { status: 422 });
+        }
         return NextResponse.json({ success: false, error: error?.message || 'Failed to save form. Please try again or contact support.' }, { status: 500 });
     }
 }

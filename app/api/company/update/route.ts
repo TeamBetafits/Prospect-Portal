@@ -11,7 +11,9 @@ export const dynamic = 'force-dynamic';
 export async function PATCH(request: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
 
         const companyId = await getCompanyId();
         if (!companyId) return NextResponse.json({ error: 'User must be linked to a company' }, { status: 400 });

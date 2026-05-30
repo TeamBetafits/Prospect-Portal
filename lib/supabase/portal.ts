@@ -41,6 +41,10 @@ const contactStandardFields: Array<Pick<FieldDefinition, "key" | "label" | "type
   { key: "phone", label: "Phone", type: "phone", format: "phone" },
 ];
 
+const usersStandardFields: Array<Pick<FieldDefinition, "key" | "label" | "type" | "format">> = [
+  { key: "email", label: "Email", type: "email", format: "email" },
+];
+
 const locationStandardFields: Array<Pick<FieldDefinition, "key" | "label" | "type" | "format">> = [
   { key: "zip_code", label: "ZIP Code", type: "text", format: "zip" },
 ];
@@ -53,6 +57,7 @@ function getStandardFields(table: string): Array<Pick<FieldDefinition, "key" | "
   if (table === "companies") return companyStandardFields;
   if (table === "entities") return entityStandardFields;
   if (table === "contacts") return contactStandardFields;
+  if (table === "users") return usersStandardFields;
   if (table === "locations") return locationStandardFields;
   if (table === "policy_or_admin_configurations") return policyStandardFields;
   return [];
@@ -196,6 +201,119 @@ function cleanObject<T extends Json>(input: T): Partial<T> {
   return Object.fromEntries(
     Object.entries(input).filter(([, value]) => value !== undefined && value !== null && value !== "")
   ) as Partial<T>;
+}
+
+type UpsertConflict = {
+  table: string;
+  field: string;
+  existingValue: unknown;
+  incomingValue: unknown;
+  reason: "blank_ignored" | "protected_existing_value" | "weak_default_ignored" | "value_updated";
+};
+
+type UpsertOptions = {
+  protectExistingFields?: string[];
+  matchKeys?: string[][];
+};
+
+const QUICK_START_WEAK_DEFAULTS = new Set([
+  "quick start - medical plan",
+  "quick start - dental plan",
+  "quick start - vision plan",
+]);
+
+function normalizeCompareValue(value: unknown): string {
+  return asString(value).trim().toLowerCase();
+}
+
+function isBlankLike(value: unknown): boolean {
+  return value === null || value === undefined || asString(value).trim() === "";
+}
+
+function isWeakDefaultValue(field: string, value: unknown): boolean {
+  if (field !== "plan_name_client" && field !== "plan_number") return false;
+  return QUICK_START_WEAK_DEFAULTS.has(normalizeCompareValue(value));
+}
+
+function buildMergedPatch(params: {
+  table: string;
+  incoming: Json;
+  existing: Json | null;
+  protectExistingFields?: string[];
+}): { patch: Json; conflicts: UpsertConflict[] } {
+  const { table, incoming, existing, protectExistingFields = [] } = params;
+  const patch: Json = {};
+  const conflicts: UpsertConflict[] = [];
+
+  for (const [field, incomingValue] of Object.entries(incoming)) {
+    if (field === "id" || field === "company_id") continue;
+    if (field === "updated_at") {
+      patch[field] = incomingValue;
+      continue;
+    }
+
+    if (isBlankLike(incomingValue)) {
+      continue;
+    }
+
+    const existingValue = existing ? existing[field] : undefined;
+    const hasExisting = !isBlankLike(existingValue);
+
+    if (hasExisting && protectExistingFields.includes(field)) {
+      if (normalizeCompareValue(existingValue) !== normalizeCompareValue(incomingValue)) {
+        conflicts.push({
+          table,
+          field,
+          existingValue,
+          incomingValue,
+          reason: "protected_existing_value",
+        });
+      }
+      continue;
+    }
+
+    if (hasExisting && isWeakDefaultValue(field, incomingValue)) {
+      conflicts.push({
+        table,
+        field,
+        existingValue,
+        incomingValue,
+        reason: "weak_default_ignored",
+      });
+      continue;
+    }
+
+    if (!hasExisting || normalizeCompareValue(existingValue) !== normalizeCompareValue(incomingValue)) {
+      patch[field] = incomingValue;
+      if (hasExisting) {
+        conflicts.push({
+          table,
+          field,
+          existingValue,
+          incomingValue,
+          reason: "value_updated",
+        });
+      }
+    }
+  }
+
+  return { patch: cleanObject(patch), conflicts };
+}
+
+function findMatchingRow(rows: any[], incoming: Json, matchKeys: string[][]): any | null {
+  for (const candidate of rows) {
+    for (const keySet of matchKeys) {
+      const hasAllIncoming = keySet.every((key) => !isBlankLike(incoming[key]));
+      if (!hasAllIncoming) continue;
+
+      const isMatch = keySet.every(
+        (key) => normalizeCompareValue(candidate?.[key]) === normalizeCompareValue(incoming[key])
+      );
+      if (isMatch) return candidate;
+    }
+  }
+
+  return rows[0] || null;
 }
 
 async function maybeSingle<T>(query: any): Promise<T | null> {
@@ -383,8 +501,16 @@ export async function listAssignedForms(companyId: string): Promise<AssignedForm
 
   const forms = rows.map((row) => {
     const available = row.intake_available_forms || {};
-    const templateId = available.airtable_id || row.airtable_id || row.available_form_id;
     const rowName = row.name || available.display_name || "Assigned Form";
+    const isMissingPremiums =
+      rowName.toLowerCase().includes("missing premiums") ||
+      rowName.toLowerCase().includes("confirm plan premiums") ||
+      String(available.display_name || "").toLowerCase().includes("missing premiums") ||
+      String(available.display_name || "").toLowerCase().includes("confirm plan premiums");
+
+    const templateId = isMissingPremiums
+      ? "missing-premiums-manual-input"
+      : (available.airtable_id || row.airtable_id || row.available_form_id);
     let status = mapFormStatus(row.status, row.submitted);
 
     // Upgrade NOT_STARTED → SUBMITTED if form_submissions has a record for this form group
@@ -429,6 +555,15 @@ function computeFormGroupKey(formId: string, formName: string): string {
     route.includes("quick-start")
   ) {
     return "quick-start";
+  }
+
+  if (
+    formId === "missing-premiums-manual-input" ||
+    name.includes("missing premiums") ||
+    name.includes("confirm plan premiums") ||
+    route.includes("missing-premiums")
+  ) {
+    return "missing-premiums-manual-input";
   }
 
   // For all other forms use the formId itself as the key
@@ -751,6 +886,8 @@ export async function updateCompanyData(companyId: string, body: Json): Promise<
     phone: pick(contact, "phone"),
     email: pick(contact, "email"),
     client_contacts: [pick(contact, "firstName"), pick(contact, "lastName")].filter(Boolean).join(" "),
+  }, {
+    matchKeys: [["email"], ["phone"], ["client_contacts"]],
   });
 
   await upsertSingleton("entities", companyId, {
@@ -770,19 +907,35 @@ export async function updateCompanyData(companyId: string, body: Json): Promise<
   });
 }
 
-async function upsertSingleton(table: string, companyId: string, patch: Json): Promise<string | null> {
+async function upsertSingleton(
+  table: string,
+  companyId: string,
+  patch: Json,
+  options: UpsertOptions = {}
+): Promise<{ id: string | null; conflicts: UpsertConflict[] }> {
   const timestampPatch = table === "other_questions" ? patch : { ...patch, updated_at: new Date().toISOString() };
   const cleaned = normalizeTablePatch(table, cleanObject(timestampPatch));
-  if (Object.keys(cleaned).length <= 1) return null;
+  if (Object.keys(cleaned).length <= 1) return { id: null, conflicts: [] };
 
-  const existing = await maybeSingle<any>(
-    supabaseAdmin.from(table).select("id").eq("company_id", companyId).limit(1)
+  const existingRows = await list<any>(
+    supabaseAdmin.from(table).select("*").eq("company_id", companyId).limit(100)
   );
+  const existing = findMatchingRow(existingRows, cleaned, options.matchKeys || []);
+  const { patch: mergedPatch, conflicts } = buildMergedPatch({
+    table,
+    incoming: cleaned,
+    existing,
+    protectExistingFields: options.protectExistingFields,
+  });
 
   if (existing?.id) {
-    const { error } = await supabaseAdmin.from(table).update(cleaned).eq("id", existing.id);
+    if (Object.keys(mergedPatch).length === 0) {
+      return { id: existing.id, conflicts };
+    }
+
+    const { error } = await supabaseAdmin.from(table).update(mergedPatch).eq("id", existing.id);
     if (error) throw error;
-    return existing.id;
+    return { id: existing.id, conflicts };
   }
 
   const { data, error } = await supabaseAdmin
@@ -791,7 +944,7 @@ async function upsertSingleton(table: string, companyId: string, patch: Json): P
     .select("id")
     .single();
   if (error) throw error;
-  return data.id;
+  return { id: data.id, conflicts };
 }
 
 export async function getLastFormSubmissionAnswers(
@@ -876,7 +1029,7 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
   const contactId = await upsertContactFromForm(companyId, values);
   if (contactId) targets.contacts = contactId;
 
-  const entityId = await upsertSingleton("entities", companyId, {
+  const { id: entityId } = await upsertSingleton("entities", companyId, {
     primary_entity: true,
     ein: pick(values, "ein", QUICK_START_IDS.ein),
     entity_legal_name: pick(values, "ndaCompanyLegalName", "legalName", "companyName", QUICK_START_IDS.companyName),
@@ -885,7 +1038,7 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
   });
   if (entityId) targets.entities = entityId;
 
-  const locationId = await upsertSingleton("locations", companyId, {
+  const { id: locationId } = await upsertSingleton("locations", companyId, {
     primary_location: true,
     address_street: pick(values, "address", QUICK_START_IDS.address),
     city: pick(values, "city", QUICK_START_IDS.city),
@@ -894,7 +1047,7 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
   });
   if (locationId) targets.locations = locationId;
 
-  const otherId = await upsertSingleton("other_questions", companyId, {
+  const { id: otherId } = await upsertSingleton("other_questions", companyId, {
     est_med_enrolled: pick(values, "estimatedMedicalEnrolledEes", "estimatedMedicalEnrolledEEs", QUICK_START_IDS.medicalEnrolledEmployees),
     sic_code: pick(values, "preferredSicCode", "sicCode", QUICK_START_IDS.sicCode),
     naics_code: pick(values, "preferredNaicsCode", "naicsCode", QUICK_START_IDS.naicsCode),
@@ -905,7 +1058,7 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
   });
   if (otherId) targets.other_questions = otherId;
 
-  const policyId = await upsertSingleton("policy_or_admin_configurations", companyId, {
+  const { id: policyId } = await upsertSingleton("policy_or_admin_configurations", companyId, {
     carrier_admin: pick(values, "currentAdmin"),
     admin_benadmin: pick(values, "adminServices"),
     policy_number: pick(values, "policyNumber"),
@@ -926,9 +1079,22 @@ async function normalizeFormValues(companyId: string, formId: string, values: Js
 
 async function applyMappedPayloads(companyId: string, mappedPayloads: Json): Promise<Json> {
   const targets: Json = {};
+  const conflicts: UpsertConflict[] = [];
   const companyPayload = mappedPayloads.companies;
   if (companyPayload && typeof companyPayload === "object") {
-    const patch = normalizeTablePatch("companies", cleanObject({ ...(companyPayload as Json), id: undefined, updated_at: new Date().toISOString() }));
+    const existingCompany = await maybeSingle<any>(
+      supabaseAdmin.from("companies").select("*").eq("id", companyId).limit(1)
+    );
+    const { patch, conflicts: companyConflicts } = buildMergedPatch({
+      table: "companies",
+      incoming: normalizeTablePatch(
+        "companies",
+        cleanObject({ ...(companyPayload as Json), id: undefined, updated_at: new Date().toISOString() })
+      ),
+      existing: (existingCompany as Json | null) || null,
+      protectExistingFields: ["customer_status"],
+    });
+    conflicts.push(...companyConflicts);
     if (Object.keys(patch).length) {
       const { error } = await supabaseAdmin.from("companies").update(patch).eq("id", companyId);
       if (error) throw error;
@@ -943,7 +1109,23 @@ async function applyMappedPayloads(companyId: string, mappedPayloads: Json): Pro
     const ids: string[] = [];
     for (const row of rows) {
       if (!row || typeof row !== "object") continue;
-      const id = await upsertSingleton(table, companyId, { ...(row as Json), company_id: companyId });
+      const { id, conflicts: rowConflicts } = await upsertSingleton(table, companyId, { ...(row as Json), company_id: companyId }, {
+        matchKeys:
+          table === "contacts"
+            ? [["email"], ["phone"], ["client_contacts"]]
+            : table === "benefits"
+              ? [["line_of_coverage", "calendar_year"], ["line_of_coverage"]]
+              : table === "medical_plans" || table === "dental_plans" || table === "vision_plans"
+                ? [["plan_number"], ["plan_name_client", "carrier_name", "plan_year"], ["plan_name_client"]]
+                : [],
+        protectExistingFields:
+          table === "medical_plans" || table === "dental_plans" || table === "vision_plans"
+            ? ["plan_name_client", "plan_number", "carrier_name"]
+            : table === "companies"
+              ? ["customer_status"]
+              : [],
+      });
+      conflicts.push(...rowConflicts);
       if (id) ids.push(id);
     }
     if (ids.length) targets[table] = ids.length === 1 ? ids[0] : ids;
@@ -973,30 +1155,40 @@ async function applyMappedPayloads(companyId: string, mappedPayloads: Json): Pro
       targets.e_signature_signers = signerData.id;
     }
   }
+
+  if (conflicts.length) {
+    console.warn("[QuickStart upsert conflicts]", { companyId, conflicts });
+    targets.conflicts = conflicts;
+  }
+
   return targets;
 }
 
 async function upsertContactFromForm(companyId: string, values: Json): Promise<string | null> {
   const firstName = asString(pick(values, "firstName", QUICK_START_IDS.firstName));
   const lastName = asString(pick(values, "lastName", QUICK_START_IDS.lastName));
-  return upsertSingleton("contacts", companyId, {
+  const { id } = await upsertSingleton("contacts", companyId, {
     title: pick(values, "title", QUICK_START_IDS.title),
     phone: pick(values, "phone", "phoneNumber", QUICK_START_IDS.phone),
     email: pick(values, "email", QUICK_START_IDS.email),
     client_contacts: [firstName, lastName].filter(Boolean).join(" "),
     primary_contact: firstName || lastName ? "Yes" : undefined,
+  }, {
+    matchKeys: [["email"], ["phone"], ["client_contacts"]],
   });
+
+  return id;
 }
 
 async function updateSubmittingUserFromForm(companyId: string, userId: string | null, values: Json): Promise<string | null> {
   if (!userId) return null;
 
-  const patch = cleanObject({
+  const patch = normalizeTablePatch("users", cleanObject({
     first_name: pick(values, "firstName", QUICK_START_IDS.firstName),
     last_name: pick(values, "lastName", QUICK_START_IDS.lastName),
     email: pick(values, "email", QUICK_START_IDS.email),
     job_title: pick(values, "title", QUICK_START_IDS.title),
-  });
+  }));
 
   if (!Object.keys(patch).length) return null;
 

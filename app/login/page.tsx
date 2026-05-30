@@ -82,7 +82,7 @@ export default function LoginPage() {
                 <div className="p-8 pb-0">
                     <Link href="/">
                         <Image
-                            src="/betafits-logo.png"
+                            src="/logo.png"
                             alt="Betafits"
                             width={120}
                             height={32}

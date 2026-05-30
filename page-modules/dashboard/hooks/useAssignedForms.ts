@@ -18,7 +18,8 @@ export function useAssignedForms(forms: AssignedForm[]) {
     const editRoute = isSubmitted && route && route !== "#" ? `${route}?edit=true` : route;
     const isPremiumsForm =
       form.availableFormId === "missing-premiums-manual-input" ||
-      form.name.toLowerCase().includes("missing premiums");
+      form.name.toLowerCase().includes("missing premiums") ||
+      form.name.toLowerCase().includes("confirm plan premiums");
 
     let ctaLabel: string;
     if (isPremiumsForm) {
