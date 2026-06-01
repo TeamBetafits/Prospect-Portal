@@ -2,15 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCompanyId } from "@/lib/auth/getCompanyId";
 import { supabaseAdmin } from "@/lib/supabaseClient";
 import { upsertProgressStep } from "@/lib/upsertProgressStep";
+import { sanitizePremiumUpdateEntry, USER_PREMIUM_FIELDS } from "@/lib/forms/missingPremiumsUtils";
 
 const MANUAL_INPUT_STEP = "Missing Premiums Manual Input";
-
-const USER_FIELDS = new Set([
-  "premium_ee_user",
-  "premium_es_user",
-  "premium_ec_user",
-  "premium_ef_user",
-]);
 
 /**
  * POST /api/missing-premiums/submit
@@ -44,17 +38,8 @@ export async function POST(request: NextRequest) {
     // Validate and whitelist — only _user fields are ever written
     const sanitizedUpdates = hasUpdates
       ? (updates as Record<string, unknown>[])
-          .map((u) => {
-            const out: Record<string, unknown> = {};
-            if (typeof u.id === "string" && u.id) out.id = u.id;
-            for (const [key, value] of Object.entries(u)) {
-              if (USER_FIELDS.has(key) && typeof value === "number" && !Number.isNaN(value) && value >= 0) {
-                out[key] = value;
-              }
-            }
-            return out;
-          })
-          .filter((u) => typeof u.id === "string" && Object.keys(u).length > 1)
+          .map((u) => sanitizePremiumUpdateEntry(u))
+          .filter((u): u is Record<string, unknown> => u !== null)
       : [];
 
     // Security fence: only allow updates to rows whose plan belongs to this company
@@ -97,7 +82,7 @@ export async function POST(request: NextRequest) {
       const id = update.id as string;
       const patch: Record<string, number> = {};
       for (const [key, value] of Object.entries(update)) {
-        if (USER_FIELDS.has(key) && typeof value === "number") patch[key] = value;
+        if (USER_PREMIUM_FIELDS.has(key) && typeof value === "number") patch[key] = value;
       }
 
       const { error } = await supabaseAdmin

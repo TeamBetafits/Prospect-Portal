@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth/authOptions';
 import { supabaseAdmin } from '@/lib/supabaseClient';
+import { normalizeScore, normalizeEnrollmentType } from '@/lib/forms/feedbackUtils';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,61 +13,10 @@ type RequestBody = {
     values?: Record<string, unknown>;
 };
 
-function normalizeScore(value: unknown): number | null {
-    const numeric = Number(value);
-    if (Number.isInteger(numeric) && numeric >= 1 && numeric <= 5) {
-        return numeric;
-    }
-
-    return null;
-}
-
 function normalizeText(value: unknown): string | null {
-    if (value == null) {
-        return null;
-    }
-
+    if (value == null) return null;
     const cleaned = String(value).trim();
     return cleaned.length > 0 ? cleaned : null;
-}
-
-function normalizeEnrollmentType(value: unknown): string | null {
-    if (value == null) {
-        return null;
-    }
-
-    const raw = String(value).trim();
-    if (!raw) {
-        return null;
-    }
-
-    const known: Record<string, string> = {
-        employee_only: 'employee_only',
-        employee_spouse: 'employee_spouse',
-        employee_children: 'employee_children',
-        family: 'family',
-        waived: 'waived',
-        not_eligible: 'not_eligible',
-        'employee only': 'employee_only',
-        'employee + spouse': 'employee_spouse',
-        'employee + child(ren)': 'employee_children',
-        family_: 'family',
-    };
-
-    const normalizedKey = raw
-        .toLowerCase()
-        .replace(/\+/g, ' + ')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-    if (known[normalizedKey]) {
-        return known[normalizedKey];
-    }
-
-    return normalizedKey
-        .replace(/\(ren\)/g, 'ren')
-        .replace(/[^a-z0-9]+/g, '_')
-        .replace(/^_+|_+$/g, '');
 }
 
 async function findSupabaseCompanyIdByEmail(email: string): Promise<string | null> {

@@ -2,6 +2,11 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { Upload, CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
+import {
+  buildPremiumUpdates,
+  getUserField,
+  hasPremiumInvalidInput,
+} from "@/lib/forms/missingPremiumsUtils";
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 // Real schema: tiers_and_rates has 4 rows per plan (one per tier_key: EE/ES/EC/EF).
@@ -41,13 +46,13 @@ function getFoundPremium(row: TiersAndRatesRow): number | null {
 }
 
 /** The _user field name for a tier row. */
-function getUserField(row: TiersAndRatesRow): string {
-  return `premium_${row.tier_key.toLowerCase()}_user`;
+function getUserFieldForRow(row: TiersAndRatesRow): string {
+  return getUserField(row.tier_key);
 }
 
 /** Pre-fill value from any existing _user correction. */
 function getExistingUserValue(row: TiersAndRatesRow): string {
-  const key = getUserField(row) as keyof TiersAndRatesRow;
+  const key = getUserFieldForRow(row) as keyof TiersAndRatesRow;
   const val = row[key] as number | null;
   return val !== null && val !== undefined ? String(val) : "";
 }
@@ -132,11 +137,7 @@ export default function MissingPremiumsManualInputForm() {
   const hasUserPremium = Object.values(userInputs).some((v) => v !== "");
   const hasUploadedDocument = files.length > 0;
 
-  const hasInvalidInput = Object.values(userInputs).some((v) => {
-    if (v === "") return false;
-    const n = Number(v);
-    return Number.isNaN(n) || n < 0;
-  });
+  const hasInvalidInput = hasPremiumInvalidInput(userInputs);
 
   const canSubmit =
     !isLoading &&
@@ -155,15 +156,7 @@ export default function MissingPremiumsManualInputForm() {
   }
 
   function buildUpdates() {
-    return rows
-      .map((row) => {
-        const raw = userInputs[row.id];
-        if (!raw || raw === "") return null;
-        const num = Number(raw);
-        if (Number.isNaN(num) || num < 0) return null;
-        return { id: row.id, [getUserField(row)]: num };
-      })
-      .filter(Boolean);
+    return buildPremiumUpdates(rows, userInputs);
   }
 
   async function handleSubmit(event: React.FormEvent) {
