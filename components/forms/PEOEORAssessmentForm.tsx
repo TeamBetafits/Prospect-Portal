@@ -496,10 +496,19 @@ export default function PEOEORAssessmentForm({ initialValues = {}, onSubmit, isS
   const [form, setForm] = useState({ ...initialForm, ...initialValues });
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const hasMergedInitial = useRef(false);
   const selfTestReport = runSelfTests();
   const testsPass = selfTestReport.meetsThreshold;
   const next = () => setCurrentStep((step) => Math.min(step + 1, 3));
   const back = () => { if (!submitted) setCurrentStep((step) => Math.max(step - 1, 0)); };
+
+  // Sync async pre-fill: only runs once, user edits are not overwritten.
+  useEffect(() => {
+    if (hasMergedInitial.current) return;
+    if (!initialValues || Object.keys(initialValues).length === 0) return;
+    setForm(prev => ({ ...initialValues, ...prev }));
+    hasMergedInitial.current = true;
+  }, [initialValues]);
 
   useEffect(() => {
     if (!testsPass) {

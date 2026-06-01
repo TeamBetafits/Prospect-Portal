@@ -125,6 +125,47 @@ const UPDATE_QUICKSTART_ENTRIES: FieldMappingEntry[] = [
   { sourceField: "EIN",              targetField: "ein",           editableBy: "Betafits" },
 ];
 
+/**
+ * Update PEO/HR — contact info editable, company name Betafits-managed;
+ * currentPEO editable because the prospect may have changed their PEO.
+ */
+const UPDATE_PEO_HR_ENTRIES: FieldMappingEntry[] = [
+  { sourceField: "Company Name",  targetField: "companyName", editableBy: "Betafits" },
+  { sourceField: "First Name",    targetField: "firstName",   editableBy: "Client" },
+  { sourceField: "Last Name",     targetField: "lastName",    editableBy: "Client" },
+  { sourceField: "Job Title",     targetField: "title",       editableBy: "Client" },
+  { sourceField: "Phone Number",  targetField: "phone",       editableBy: "Client" },
+  { sourceField: "Work Email",    targetField: "email",       editableBy: "Client" },
+  { sourceField: "Current PEO",   targetField: "currentPEO",  editableBy: "Client" },
+];
+
+/**
+ * Broker Role — contact info for the prospect; editable so they can
+ * confirm or correct what we have on file.
+ */
+const BROKER_ROLE_ENTRIES: FieldMappingEntry[] = [
+  { sourceField: "First Name",    targetField: "firstName",   editableBy: "Client" },
+  { sourceField: "Last Name",     targetField: "lastName",    editableBy: "Client" },
+  { sourceField: "Phone Number",  targetField: "phone",       editableBy: "Client" },
+  { sourceField: "Work Email",    targetField: "email",       editableBy: "Client" },
+];
+
+/**
+ * HR Tech — pre-fill the current HR system field from the stored HR
+ * software value; editable because it may have changed.
+ */
+const HR_TECH_ENTRIES: FieldMappingEntry[] = [
+  { sourceField: "HR Software Used", targetField: "currentHRSystem", editableBy: "Client" },
+];
+
+/**
+ * PEO/EOR Assessment — pre-fill current PEO; editable because the
+ * prospect may be in the process of switching.
+ */
+const PEO_EOR_ASSESSMENT_ENTRIES: FieldMappingEntry[] = [
+  { sourceField: "Current PEO", targetField: "currentPEO", editableBy: "Client" },
+];
+
 // ─── Registry ────────────────────────────────────────────────────────────────
 
 export const FORM_PREFILL_MAPPINGS: Record<string, CompiledFormMapping> = {
@@ -152,4 +193,16 @@ export const FORM_PREFILL_MAPPINGS: Record<string, CompiledFormMapping> = {
 
   // Update Quickstart (w/ current benefits)
   rZhiEaUEskus: compile(UPDATE_QUICKSTART_ENTRIES),
+
+  // Update PEO/HR
+  gn6WNJPJKTus: compile(UPDATE_PEO_HR_ENTRIES),
+
+  // Broker Role
+  recxH9Jrk10bbqU58: compile(BROKER_ROLE_ENTRIES),
+
+  // HR Tech
+  recOt6cX0t1DksDFT: compile(HR_TECH_ENTRIES),
+
+  // PEO/EOR Assessment
+  recKzuznmqq29uASl: compile(PEO_EOR_ASSESSMENT_ENTRIES),
 };
